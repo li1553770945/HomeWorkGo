@@ -10,8 +10,8 @@ type UserModel struct {
 	ID         int    `json:"id"`
 	Username   string `json:"username" validate:"required"`
 	Name       string `json:"name"`
-	Password   string `json:"password"`
-	Validation string `json:"validation"`
+	Password   string `json:"-"`
+	Validation string `json:"-"`
 	Status     bool   `json:"status"`
 }
 
@@ -31,13 +31,14 @@ func CreateUser(user *UserModel) (err error) {
 }
 
 func GetUserByUserName(username string) (user *UserModel, err error) {
-	if err = dao.DB.Find(&user).Error; err != nil {
+	user = new(UserModel)
+	if err = dao.DB.Where("username = ?", username).First(user).Error; err != nil {
 		return nil, err
 	}
 	return
 }
 
-func GetUserById(id string) (user *UserModel, err error) {
+func GetUserById(id int) (user *UserModel, err error) {
 	user = new(UserModel)
 	if err = dao.DB.Debug().Where("id=?", id).First(user).Error; err != nil {
 		return nil, err
