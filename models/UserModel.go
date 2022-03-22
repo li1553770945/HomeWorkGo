@@ -4,15 +4,18 @@ import (
 	"HomeWorkGo/dao"
 	"crypto/md5"
 	"encoding/hex"
+	"time"
 )
 
 type UserModel struct {
-	ID         int    `json:"id" gorm:"primary_key"`
-	Username   string `gorm:"unique_index"`
-	Name       string `json:"name"`
-	Password   string `json:"-"`
-	Validation string `json:"-"`
-	Status     int    `json:"status"`
+	ID         int       `json:"id" gorm:"primary_key"`
+	Username   string    `gorm:"unique_index"`
+	Name       string    `json:"name"`
+	Password   string    `json:"-"`
+	Validation string    `json:"-"`
+	Status     int       `json:"status"`
+	CreatedAt  time.Time `gorm:"autoCreateTime"`
+	LastLogin  time.Time
 }
 
 func CreateUser(user *UserModel) (err error) {

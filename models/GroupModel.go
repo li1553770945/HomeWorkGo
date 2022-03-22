@@ -2,15 +2,16 @@ package models
 
 import (
 	"HomeWorkGo/dao"
-	"fmt"
+	"time"
 )
 
 type GroupModel struct {
-	ID      int    `json:"id" gorm:"primary_key"`
-	Name    string `json:"name"`
-	Desc    string `json:"desc"`
-	OwnerID int
-	Owner   UserModel `gorm:"Foreignkey:OwnerID"`
+	ID        int       `json:"id" gorm:"primary_key"`
+	Name      string    `json:"name"`
+	Desc      string    `json:"desc"`
+	CreatedAt time.Time `gorm:"autoCreateTime"`
+	OwnerID   int
+	Owner     UserModel `gorm:"Foreignkey:OwnerID"`
 }
 
 func CreateGroup(group *GroupModel) (err error) {
@@ -20,11 +21,34 @@ func CreateGroup(group *GroupModel) (err error) {
 
 func GetGroupByID(groupID int) (group *GroupModel, err error) {
 	group = new(GroupModel)
-	fmt.Println(groupID)
 	err = dao.DB.Where("id = ?", groupID).First(&group).Error
 	if err != nil {
 		return nil, err
 	}
-	dao.DB.Model(&group).Association("owner").Find(&group.Owner)
+	err = dao.DB.Model(&group).Association("owner").Find(&group.Owner).Error
+	if err != nil {
+		return nil, err
+	}
 	return group, nil
+}
+
+func GetGroupsByOwnerID(ownerID int, start int, end int) (groups *[]GroupModel, err error) {
+	groups = new([]GroupModel)
+	err = dao.DB.Where("owner_id = ?", ownerID).Offset(start).Limit(end - start).Find(&groups).Error
+	if err != nil {
+		return nil, err
+	}
+	return groups, nil
+}
+
+func GetGroupNumByOwnerID(ownerID int) (num int, err error) {
+	err = dao.DB.Model(&GroupModel{}).Where("owner_id = ?", ownerID).Count(&num).Error
+	if err != nil {
+		return 0, err
+	}
+	return num, nil
+}
+func DeleteGroupByID(groupID int) (err error) {
+	err = dao.DB.Where("id=?", groupID).Delete(&GroupModel{}).Error
+	return
 }

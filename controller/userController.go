@@ -10,6 +10,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"io/ioutil"
 	"net/http"
+	"time"
 )
 
 func Register(c *gin.Context) {
@@ -93,7 +94,8 @@ func Login(c *gin.Context) {
 	session := sessions.Default(c)
 	session.Set("uid", user.ID)
 	session.Save()
-	c.JSON(http.StatusOK, gin.H{"code": 0})
+	user.LastLogin = time.Now()
+	c.JSON(http.StatusOK, gin.H{"code": 0, "data": user})
 
 }
 

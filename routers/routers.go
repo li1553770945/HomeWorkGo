@@ -35,7 +35,7 @@ func SetupRouter() *gin.Engine {
 		v1Group.DELETE("/todo/:id", controller.DeleteATodo)
 	}
 	//user
-	userRoutes := r.Group("")
+	userRoutes := r.Group("/api")
 	{
 
 		userRoutes.POST("/user", controller.Register)
@@ -45,11 +45,15 @@ func SetupRouter() *gin.Engine {
 
 	}
 	//Group
-	groupRoutes := r.Group("")
+	groupRoutes := r.Group("/api")
 	{
 
 		groupRoutes.POST("/group", controller.CreateGroup)
 		groupRoutes.GET("/group", controller.GetGroup)
+		groupRoutes.DELETE("/group", controller.GetGroup)
+
+		groupRoutes.GET("/mygroup", controller.GetGroupsByOwnerID)
+		groupRoutes.GET("/mygroupnum", controller.GetGroupsNumByOwnerID)
 
 	}
 	//homework

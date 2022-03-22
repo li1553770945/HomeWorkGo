@@ -79,7 +79,7 @@ func GetGroup(c *gin.Context) {
 	return
 }
 
-func GetGroupByOwnerID(c *gin.Context) {
+func GetGroupsByOwnerID(c *gin.Context) {
 	session := sessions.Default(c)
 	uid := session.Get("uid")
 
@@ -89,18 +89,41 @@ func GetGroupByOwnerID(c *gin.Context) {
 	}
 	json := make(map[string]interface{}) //注意该结构接受的内容
 	c.BindJSON(&json)
-	if json["groupID"] == nil {
+	start := json["start"]
+	end := json["end"]
+	if start == nil || end == nil {
 		c.JSON(http.StatusOK, gin.H{"code": 2001, "msg": "请求参数错误"})
 		return
 	}
+	ownerIDint := uid.(int)
+	startint := int(start.(float64))
+	endint := int(end.(float64))
 
-	groupID := int(json["groupID"].(float64))
-	group, err := models.GetGroupByID(groupID)
-	fmt.Println(group)
+	groups, err := models.GetGroupsByOwnerID(ownerIDint, startint, endint)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 5001, "msg": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"code": 0, "data": group})
+	c.JSON(http.StatusOK, gin.H{"code": 0, "data": groups})
+	return
+}
+
+func GetGroupsNumByOwnerID(c *gin.Context) {
+	session := sessions.Default(c)
+	uid := session.Get("uid")
+
+	if uid == nil {
+		c.JSON(http.StatusOK, gin.H{"code": 4003, "msg": "您还未登录，请先登录"})
+		return
+	}
+
+	ownerIDint := uid.(int)
+
+	num, err := models.GetGroupNumByOwnerID(ownerIDint)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 5001, "msg": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"code": 0, "data": num})
 	return
 }
