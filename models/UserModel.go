@@ -2,13 +2,15 @@ package models
 
 import (
 	"HomeWorkGo/dao"
+	"crypto/md5"
+	"encoding/hex"
 )
 
 type UserModel struct {
 	ID         int    `json:"id" gorm:"primary_key"`
 	Username   string `gorm:"unique_index"`
 	Name       string `json:"name"`
-	Password   string `json:"password"`
+	Password   string `json:"-"`
 	Validation string `json:"-"`
 	Status     int    `json:"status"`
 }
@@ -33,7 +35,18 @@ func GetUserById(id int) (user *UserModel, err error) {
 	}
 	return
 }
-
+func Encrypt(passwd string) string {
+	m := md5.New()
+	m.Write([]byte(passwd))
+	res := hex.EncodeToString(m.Sum(nil))
+	return res
+}
+func SetUserPasswd(user *UserModel, passwd string) {
+	user.Password = Encrypt(passwd)
+}
+func CheckUserPasswd(user *UserModel, passwd string) bool {
+	return Encrypt(passwd) == user.Password
+}
 func UpdateUser(user *UserModel) (err error) {
 	err = dao.DB.Save(user).Error
 	return err

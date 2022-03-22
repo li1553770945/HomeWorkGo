@@ -2,10 +2,13 @@ package controller
 
 import (
 	"HomeWorkGo/models"
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"io/ioutil"
 	"net/http"
 )
 
@@ -14,8 +17,13 @@ func Register(c *gin.Context) {
 	var user models.UserModel
 	user.Status = 1
 	validate := validator.New()
+	data, err := c.GetRawData()
+	if err != nil {
+		fmt.Println(err.Error())
+	}
 
-	err := c.BindJSON(&user)
+	c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(data))
+	err = c.BindJSON(&user)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 4001, "msg": err.Error()})
 		return
@@ -26,6 +34,19 @@ func Register(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"code": 4001, "msg": err.Error()})
 		return
 	}
+	jsondata := make(map[string]interface{})
+	err = json.Unmarshal(data, &jsondata)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 5001, "msg": err.Error()})
+		return
+	}
+
+	if jsondata["password"] == nil {
+		c.JSON(http.StatusOK, gin.H{"code": 4001, "msg": "提交参数错误"})
+		return
+	}
+
+	models.SetUserPasswd(&user, jsondata["password"].(string))
 
 	err = models.CreateUser(&user)
 	if err != nil {
@@ -57,13 +78,12 @@ func Login(c *gin.Context) {
 	}
 
 	var user *models.UserModel
-	fmt.Println(loginRequest.Username)
 	user, err = models.GetUserByUserName(loginRequest.Username)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 4004, "msg": "用户名或密码错误"})
 		return
 	}
-	if user.Password != loginRequest.Password {
+	if !models.CheckUserPasswd(user, loginRequest.Password) {
 		c.JSON(http.StatusOK, gin.H{"code": 4004, "msg": "用户名或密码错误"})
 		return
 	}

@@ -78,3 +78,29 @@ func GetGroup(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"code": 0, "data": group})
 	return
 }
+
+func GetGroupByOwnerID(c *gin.Context) {
+	session := sessions.Default(c)
+	uid := session.Get("uid")
+
+	if uid == nil {
+		c.JSON(http.StatusOK, gin.H{"code": 4003, "msg": "您还未登录，请先登录"})
+		return
+	}
+	json := make(map[string]interface{}) //注意该结构接受的内容
+	c.BindJSON(&json)
+	if json["groupID"] == nil {
+		c.JSON(http.StatusOK, gin.H{"code": 2001, "msg": "请求参数错误"})
+		return
+	}
+
+	groupID := int(json["groupID"].(float64))
+	group, err := models.GetGroupByID(groupID)
+	fmt.Println(group)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 5001, "msg": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"code": 0, "data": group})
+	return
+}
