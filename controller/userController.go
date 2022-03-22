@@ -12,7 +12,7 @@ import (
 func Register(c *gin.Context) {
 
 	var user models.UserModel
-	user.Status = true
+	user.Status = 1
 	validate := validator.New()
 
 	err := c.BindJSON(&user)
@@ -67,7 +67,9 @@ func Login(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"code": 4004, "msg": "用户名或密码错误"})
 		return
 	}
-
+	if user.Status == 0 {
+		c.JSON(http.StatusOK, gin.H{"code": 4004, "msg": "抱歉，您的账户目前不可用"})
+	}
 	session := sessions.Default(c)
 	session.Set("uid", user.ID)
 	session.Save()

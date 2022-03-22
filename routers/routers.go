@@ -44,6 +44,14 @@ func SetupRouter() *gin.Engine {
 		userRoutes.POST("/login", controller.Login)
 
 	}
+	//Group
+	groupRoutes := r.Group("")
+	{
+
+		groupRoutes.POST("/group", controller.CreateGroup)
+		groupRoutes.GET("/group", controller.GetGroup)
+
+	}
 	//homework
 	//HomeWorkRoutes := r.Group("")
 	//{

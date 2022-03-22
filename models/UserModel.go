@@ -2,27 +2,15 @@ package models
 
 import (
 	"HomeWorkGo/dao"
-	"github.com/go-playground/validator/v10"
-	"time"
 )
 
 type UserModel struct {
-	ID         int    `json:"id"`
-	Username   string `json:"username" validate:"required"`
+	ID         int    `json:"id" gorm:"primary_key"`
+	Username   string `gorm:"unique_index"`
 	Name       string `json:"name"`
-	Password   string `json:"-"`
+	Password   string `json:"password"`
 	Validation string `json:"-"`
-	Status     bool   `json:"status"`
-}
-
-func timing(fl validator.FieldLevel) bool {
-	if date, ok := fl.Field().Interface().(time.Time); ok {
-		today := time.Now()
-		if today.After(date) {
-			return false
-		}
-	}
-	return true
+	Status     int    `json:"status"`
 }
 
 func CreateUser(user *UserModel) (err error) {
