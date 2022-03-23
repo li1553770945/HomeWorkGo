@@ -18,11 +18,34 @@ func CheckJoin(groupID int, uid int) (joined bool, err error) {
 	err = dao.DB.Model(&GroupMemberModel{}).Where("group_model_id = ? AND user_model_id = ?", groupID, uid).Count(&num).Error
 	return num != 0, err
 }
-func JoinGroup(groupID int, uid int) (err error) {
+func CreateGroupMember(groupID int, uid int) (err error) {
 	group, err := GetGroupByID(groupID)
 	if err != nil {
 		return err
 	}
 	err = dao.DB.Model(&group).Association("Members").Append(&UserModel{ID: uid})
 	return err
+}
+func DeleteGroupMember(groupID int, uid int) (err error) {
+	err = dao.DB.Where("group_model_id=? AND user_model_id = ?", groupID, uid).Delete(&GroupMemberModel{}).Error
+	return err
+}
+
+func GetGroupJoined(uid int, start int, end int) (groups *[]GroupModel, err error) {
+	if err != nil {
+		return nil, err
+	}
+	groups = new([]GroupModel)
+	group_members := new([]GroupMemberModel)
+	dao.DB.Model(&GroupMemberModel{}).Offset(start).Limit(end-start).Where("user_model_id = ?", uid).Find(&group_members)
+	err = dao.DB.Model(&group_members).Association("Group").Find(&groups)
+	if err != nil {
+		return nil, err
+	}
+	return groups, nil
+}
+
+func GetGroupJoinedNum(uid int) (num int64, err error) {
+	err = dao.DB.Model(&GroupMemberModel{}).Where("user_model_id = ?", uid).Count(&num).Error
+	return num, err
 }

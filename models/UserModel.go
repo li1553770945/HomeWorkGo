@@ -16,7 +16,7 @@ type UserModel struct {
 	Status       int         `json:"status,omitempty"`
 	CreatedAt    time.Time   `json:"created_at,omitempty" gorm:"autoCreateTime,omitempty"`
 	LastLogin    time.Time   `json:"last_login,omitempty"`
-	JoinedGroups []UserModel `json:"joined_groups,omitempty" gorm:"many2many:group_members;"`
+	GroupsJoined []UserModel `json:"joined_groups,omitempty" gorm:"many2many:group_members;"`
 }
 
 func CreateUser(user *UserModel) (err error) {

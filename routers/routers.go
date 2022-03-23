@@ -52,10 +52,14 @@ func SetupRouter() *gin.Engine {
 		groupRoutes.GET("/group", controller.GetGroup)
 		groupRoutes.DELETE("/group", controller.DeleteGroup)
 
-		groupRoutes.GET("/mygroup", controller.GetMyGroups)
-		groupRoutes.GET("/mygroupnum", controller.GetMyGroupsNum)
+		groupRoutes.GET("/mygroup", controller.GetGroupsCreated)
+		groupRoutes.GET("/mygroupnum", controller.GetGroupsCreatedNum)
 
-		groupRoutes.POST("/join", controller.JoinGroup)
+		groupRoutes.POST("/joingroup", controller.JoinGroup)
+		groupRoutes.DELETE("/quitgroup", controller.QuitGroup)
+
+		groupRoutes.GET("/groupjoined", controller.GetGroupsJoined)
+		groupRoutes.GET("/groupjoinednum", controller.GetMyGroupsJoinedNum)
 
 	}
 	//homework

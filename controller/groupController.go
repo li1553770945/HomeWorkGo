@@ -111,7 +111,7 @@ func DeleteGroup(c *gin.Context) {
 	return
 }
 
-func GetMyGroups(c *gin.Context) {
+func GetGroupsCreated(c *gin.Context) {
 	session := sessions.Default(c)
 	uid := session.Get("uid")
 
@@ -140,7 +140,7 @@ func GetMyGroups(c *gin.Context) {
 	return
 }
 
-func GetMyGroupsNum(c *gin.Context) {
+func GetGroupsCreatedNum(c *gin.Context) {
 	session := sessions.Default(c)
 	uid := session.Get("uid")
 
