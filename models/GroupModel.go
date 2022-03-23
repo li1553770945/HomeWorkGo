@@ -11,7 +11,8 @@ type GroupModel struct {
 	Desc      string    `json:"desc"`
 	CreatedAt time.Time `gorm:"autoCreateTime"`
 	OwnerID   int
-	Owner     UserModel `gorm:"Foreignkey:OwnerID"`
+	Owner     UserModel   `gorm:"Foreignkey:OwnerID"`
+	Members   []UserModel `gorm:"many2many:group_members;"`
 }
 
 func CreateGroup(group *GroupModel) (err error) {
@@ -25,7 +26,7 @@ func GetGroupByID(groupID int) (group *GroupModel, err error) {
 	if err != nil {
 		return nil, err
 	}
-	err = dao.DB.Model(&group).Association("owner").Find(&group.Owner).Error
+	err = dao.DB.Model(&group).Association("owner").Error
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +42,7 @@ func GetGroupsByOwnerID(ownerID int, start int, end int) (groups *[]GroupModel, 
 	return groups, nil
 }
 
-func GetGroupNumByOwnerID(ownerID int) (num int, err error) {
+func GetGroupNumByOwnerID(ownerID int) (num int64, err error) {
 	err = dao.DB.Model(&GroupModel{}).Where("owner_id = ?", ownerID).Count(&num).Error
 	if err != nil {
 		return 0, err

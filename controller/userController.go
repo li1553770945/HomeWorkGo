@@ -95,6 +95,7 @@ func Login(c *gin.Context) {
 	session.Set("uid", user.ID)
 	session.Save()
 	user.LastLogin = time.Now()
+	models.UpdateUser(user)
 	c.JSON(http.StatusOK, gin.H{"code": 0, "data": user})
 
 }

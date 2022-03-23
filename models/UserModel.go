@@ -8,21 +8,21 @@ import (
 )
 
 type UserModel struct {
-	ID         int       `json:"id" gorm:"primary_key"`
-	Username   string    `gorm:"unique_index"`
-	Name       string    `json:"name"`
-	Password   string    `json:"-"`
-	Validation string    `json:"-"`
-	Status     int       `json:"status"`
-	CreatedAt  time.Time `gorm:"autoCreateTime"`
-	LastLogin  time.Time
+	ID           int       `json:"id" gorm:"primaryKey"`
+	Username     string    `gorm:"type:varchar(30);uniqueIndex"`
+	Name         string    `json:"name"`
+	Password     string    `json:"-"`
+	Validation   string    `json:"-"`
+	Status       int       `json:"status"`
+	CreatedAt    time.Time `gorm:"autoCreateTime"`
+	LastLogin    time.Time
+	JoinedGroups []UserModel `gorm:"many2many:group_members;"`
 }
 
 func CreateUser(user *UserModel) (err error) {
 	err = dao.DB.Create(&user).Error
 	return err
 }
-
 func GetUserByUserName(username string) (user *UserModel, err error) {
 	user = new(UserModel)
 	if err = dao.DB.Where("username = ?", username).First(user).Error; err != nil {

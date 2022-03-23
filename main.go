@@ -23,12 +23,12 @@ func main() {
 		fmt.Printf("init mysql failed, err:%v\n", err)
 		return
 	}
-	defer dao.Close() // 程序退出关闭数据库连接
 
-	// 模型绑定
-	dao.DB.AutoMigrate(&models.Todo{}, &models.UserModel{}, &models.GroupModel{})
-	dao.DB.Model(&models.GroupModel{}).AddForeignKey("owner_id", "user_models(id)", "CASCADE", "CASCADE")
-
+	err = dao.DB.AutoMigrate(&models.Todo{}, &models.UserModel{}, &models.GroupModel{})
+	if err != nil {
+		fmt.Printf("migrate failed, err:%v\n", err)
+		return
+	}
 	// 注册路由
 	r := routers.SetupRouter()
 
