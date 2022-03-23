@@ -2,7 +2,6 @@ package controller
 
 import (
 	"HomeWorkGo/models"
-	"fmt"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -70,7 +69,6 @@ func GetGroup(c *gin.Context) {
 
 	groupID := int(json["groupID"].(float64))
 	group, err := models.GetGroupByID(groupID)
-	fmt.Println(group)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 5001, "msg": err.Error()})
 		return
@@ -79,7 +77,41 @@ func GetGroup(c *gin.Context) {
 	return
 }
 
-func GetGroupsByOwnerID(c *gin.Context) {
+func DeleteGroup(c *gin.Context) {
+	session := sessions.Default(c)
+	uid := session.Get("uid")
+
+	if uid == nil {
+		c.JSON(http.StatusOK, gin.H{"code": 4003, "msg": "您还未登录，请先登录"})
+		return
+	}
+	json := make(map[string]interface{})
+	c.BindJSON(&json)
+	if json["groupID"] == nil {
+		c.JSON(http.StatusOK, gin.H{"code": 2001, "msg": "请求参数错误"})
+		return
+	}
+
+	groupID := int(json["groupID"].(float64))
+	group, err := models.GetGroupByID(groupID)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 5001, "msg": err.Error()})
+		return
+	}
+	if group.OwnerID != uid.(int) {
+		c.JSON(http.StatusOK, gin.H{"code": 4003, "msg": "您没有权限执行该操作"})
+		return
+	}
+	err = models.DeleteGroupByID(groupID)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 5001, "msg": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"code": 0})
+	return
+}
+
+func GetMyGroups(c *gin.Context) {
 	session := sessions.Default(c)
 	uid := session.Get("uid")
 
@@ -108,7 +140,7 @@ func GetGroupsByOwnerID(c *gin.Context) {
 	return
 }
 
-func GetGroupsNumByOwnerID(c *gin.Context) {
+func GetMyGroupsNum(c *gin.Context) {
 	session := sessions.Default(c)
 	uid := session.Get("uid")
 

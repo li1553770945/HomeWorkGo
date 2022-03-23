@@ -6,13 +6,13 @@ import (
 )
 
 type GroupModel struct {
-	ID        int       `json:"id" gorm:"primary_key"`
-	Name      string    `json:"name"`
-	Desc      string    `json:"desc"`
+	ID        int       `json:"id,omitempty" gorm:"primary_key"`
+	Name      string    `json:"name,omitempty"`
+	Desc      string    `json:"desc,omitempty"`
 	CreatedAt time.Time `gorm:"autoCreateTime"`
 	OwnerID   int
-	Owner     UserModel   `gorm:"Foreignkey:OwnerID"`
-	Members   []UserModel `gorm:"many2many:group_members;"`
+	Owner     UserModel   `json:"owner,omitempty" gorm:"Foreignkey:OwnerID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	Members   []UserModel `json:"members,omitempty" gorm:"many2many:group_members;"`
 }
 
 func CreateGroup(group *GroupModel) (err error) {
@@ -26,7 +26,8 @@ func GetGroupByID(groupID int) (group *GroupModel, err error) {
 	if err != nil {
 		return nil, err
 	}
-	err = dao.DB.Model(&group).Association("owner").Error
+	err = dao.DB.Model(&group).Select("id,name").Association("Owner").Find(&group.Owner)
+	err = dao.DB.Model(&group).Select("id,name").Association("Members").Find(&group.Members)
 	if err != nil {
 		return nil, err
 	}

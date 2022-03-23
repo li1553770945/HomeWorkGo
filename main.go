@@ -23,12 +23,17 @@ func main() {
 		fmt.Printf("init mysql failed, err:%v\n", err)
 		return
 	}
-
+	err = dao.DB.SetupJoinTable(&models.GroupModel{}, "Members", &models.GroupMemberModel{})
+	if err != nil {
+		fmt.Printf("migrate failed, err:%v\n", err)
+		return
+	}
 	err = dao.DB.AutoMigrate(&models.Todo{}, &models.UserModel{}, &models.GroupModel{})
 	if err != nil {
 		fmt.Printf("migrate failed, err:%v\n", err)
 		return
 	}
+
 	// 注册路由
 	r := routers.SetupRouter()
 

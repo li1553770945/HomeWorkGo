@@ -6,23 +6,23 @@ import (
 )
 
 type GroupMemberModel struct {
-	ID        int       `json:"id" gorm:"primary_key"`
-	CreatedAt time.Time `gorm:"autoCreateTime"`
-	OwnerID   int       `gorm:"index"`
-	GroupID   int       `gorm:"index"`
+	CreatedAt    time.Time  `gorm:"autoCreateTime"`
+	UserModelID  int        `gorm:"primaryKey;"`
+	GroupModelID int        `gorm:"primaryKey;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	User         UserModel  `gorm:"Foreignkey:UserModelID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	Group        GroupModel `gorm:"Foreignkey:GroupModelID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 }
 
-func CreateGroupMember(groupMember *GroupMemberModel) (err error) {
-	err = dao.DB.Create(&groupMember).Error
-	return err
+func CheckJoin(groupID int, uid int) (joined bool, err error) {
+	var num int64
+	err = dao.DB.Model(&GroupMemberModel{}).Where("group_model_id = ? AND user_model_id = ?", groupID, uid).Count(&num).Error
+	return num != 0, err
 }
-
-func DeleteGroupMember(groupMember *GroupMemberModel) (err error) {
-	err = dao.DB.Create(&groupMember).Error
-	return err
-}
-
-func GetMyGroups(groupMember *GroupMemberModel) (err error) {
-	err = dao.DB.Create(&groupMember).Error
+func JoinGroup(groupID int, uid int) (err error) {
+	group, err := GetGroupByID(groupID)
+	if err != nil {
+		return err
+	}
+	err = dao.DB.Model(&group).Association("Members").Append(&UserModel{ID: uid})
 	return err
 }
