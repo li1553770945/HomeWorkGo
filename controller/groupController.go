@@ -2,9 +2,13 @@ package controller
 
 import (
 	"HomeWorkGo/models"
+	"bytes"
+	"encoding/json"
+	"fmt"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"io/ioutil"
 	"net/http"
 )
 
@@ -20,20 +24,28 @@ func CreateGroup(c *gin.Context) {
 	uidint := uid.(int)
 
 	var group models.GroupModel
-
-	validate := validator.New()
-	err := validate.Struct(group)
+	data, err := c.GetRawData()
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"code": 4001, "msg": err.Error()})
-		return
+		fmt.Println(err.Error())
 	}
 
+	c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(data))
 	err = c.BindJSON(&group)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 4001, "msg": err.Error()})
 		return
 	}
 	group.OwnerID = uidint
+	jsondata := make(map[string]interface{})
+	err = json.Unmarshal(data, &jsondata)
+	group.Password = jsondata["password"].(string)
+	validate := validator.New()
+	err = validate.Struct(group)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 4001, "msg": err.Error()})
+		return
+	}
+
 	err = models.CreateGroup(&group)
 
 	if err != nil {

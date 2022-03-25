@@ -36,12 +36,16 @@ func GetGroupJoined(uid int, start int, end int) (groups *[]GroupModel, err erro
 		return nil, err
 	}
 	groups = new([]GroupModel)
-	group_members := new([]GroupMemberModel)
-	dao.DB.Model(&GroupMemberModel{}).Offset(start).Limit(end-start).Where("user_model_id = ?", uid).Find(&group_members)
-	err = dao.DB.Model(&group_members).Association("Group").Find(&groups)
-	if err != nil {
-		return nil, err
+	groupMembers := new([]GroupMemberModel)
+	dao.DB.Model(&GroupMemberModel{}).Offset(start).Limit(end-start).Where("user_model_id = ?", uid).Find(&groupMembers)
+	err = dao.DB.Model(&groupMembers).Association("Group").Find(&groups)
+	for i := 0; i < len(*groups); i++ {
+		err = dao.DB.Model(&(*groups)[i]).Select("id,name").Association("Owner").Find(&(*groups)[i].Owner)
+		if err != nil {
+			return nil, err
+		}
 	}
+
 	return groups, nil
 }
 

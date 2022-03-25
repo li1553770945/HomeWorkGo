@@ -34,6 +34,15 @@ func JoinGroup(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"code": 4003, "msg": "您已经加入该组织"})
 		return
 	}
+	group, err := models.GetGroupByID(groupID)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 5001, "msg": err.Error()})
+		return
+	}
+	if group.Password != json["password"] {
+		c.JSON(http.StatusOK, gin.H{"code": 4003, "msg": "加入密码错误"})
+		return
+	}
 
 	err = models.CreateGroupMember(groupID, uidint)
 	if err != nil {

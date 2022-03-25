@@ -9,9 +9,9 @@ import (
 
 type UserModel struct {
 	ID           int         `json:"id,omitempty" gorm:"primaryKey"`
-	Username     string      `json:"username,omitempty" gorm:"type:varchar(30);uniqueIndex"`
-	Name         string      `json:"name,omitempty"`
-	Password     string      `json:"-"`
+	Username     string      `json:"username,omitempty"  validate:"required" gorm:"type:varchar(30);uniqueIndex"`
+	Name         string      `json:"name,omitempty"  validate:"required"`
+	Password     string      `json:"-"  validate:"required"`
 	Validation   string      `json:"-"`
 	Status       int         `json:"status,omitempty"`
 	CreatedAt    time.Time   `json:"created_at,omitempty" gorm:"autoCreateTime,omitempty"`
