@@ -5,12 +5,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"gorm.io/gorm"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 )
 
 func CreateGroup(c *gin.Context) {
@@ -148,22 +150,17 @@ func GetGroupsCreated(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"code": 4003, "msg": "您还未登录，请先登录"})
 		return
 	}
-	jsonData := make(map[string]interface{}) //注意该结构接受的内容
-	err := c.BindJSON(&jsonData)
-	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"code": 2001, "msg": "请求参数错误" + err.Error()})
-		return
-	}
-	start := jsonData["start"]
-	end := jsonData["end"]
-	if start == nil || end == nil {
+
+	start := c.Query("start")
+	end := c.Query("end")
+	if start == "" || end == "" {
 		c.JSON(http.StatusOK, gin.H{"code": 2001, "msg": "请求参数错误"})
 		return
 	}
 	ownerIDint := uid.(int)
-	startInt := int(start.(float64))
-	endInt := int(end.(float64))
-
+	startInt, _ := strconv.Atoi(start)
+	endInt, _ := strconv.Atoi(end)
+	fmt.Println(startInt, endInt)
 	groups, err := models.GetGroupsByOwnerID(ownerIDint, startInt, endInt)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 5001, "msg": err.Error()})

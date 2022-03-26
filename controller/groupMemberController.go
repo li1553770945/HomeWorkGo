@@ -5,6 +5,7 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"strconv"
 )
 
 func JoinGroup(c *gin.Context) {
@@ -98,19 +99,18 @@ func GetGroupsJoined(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"code": 4003, "msg": "您还未登录，请先登录"})
 		return
 	}
-	json := make(map[string]interface{}) //注意该结构接受的内容
-	c.BindJSON(&json)
-	start := json["start"]
-	end := json["end"]
-	if start == nil || end == nil {
+
+	start := c.Query("start")
+	end := c.Query("end")
+	if start == "" || end == "" {
 		c.JSON(http.StatusOK, gin.H{"code": 2001, "msg": "请求参数错误"})
 		return
 	}
 	ownerIDint := uid.(int)
-	startint := int(start.(float64))
-	endint := int(end.(float64))
+	startInt, _ := strconv.Atoi(start)
+	endInt, _ := strconv.Atoi(end)
 
-	groups, err := models.GetGroupJoined(ownerIDint, startint, endint)
+	groups, err := models.GetGroupJoined(ownerIDint, startInt, endInt)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 5001, "msg": err.Error()})
 		return
