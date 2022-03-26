@@ -6,14 +6,18 @@ import (
 )
 
 type HomeWorkModel struct {
-	ID        int       `json:"id,omitempty" gorm:"primary_key"`
-	Name      string    `json:"name"  validate:"required"`
-	Desc      string    `json:"desc"`
-	Subject   string    `json:"subject"`
-	CreatedAt time.Time `gorm:"autoCreateTime"`
-	group     GroupModel
-	OwnerID   int
-	Owner     UserModel `json:"owner,omitempty" gorm:"Foreignkey:OwnerID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"  validate:"-"`
+	ID                int               `json:"id,omitempty" gorm:"primary_key"`
+	Name              string            `json:"name"  validate:"required"`
+	Desc              string            `json:"desc"`
+	Subject           string            `json:"subject" validate:"required"`
+	CreatedAt         time.Time         `gorm:"autoCreateTime"`
+	EndTime           time.Time         `json:"endTime" validate:"required"`
+	CanSubmitAfterEnd bool              `validate:"required"`
+	GroupID           int               `validate:"required"`
+	Group             GroupModel        `gorm:"Foreignkey:GroupID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"  validate:"-"`
+	OwnerID           int               `validate:"required"`
+	Owner             UserModel         `json:"owner,omitempty" gorm:"Foreignkey:OwnerID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"  validate:"-"`
+	Submissions       []SubmissionModel `json:"submissions,omitempty" gorm:"many2many:submissions;"`
 }
 
 func CreateHomework(homework *HomeWorkModel) (err error) {
@@ -27,11 +31,14 @@ func GetHomeworkByID(groupID int) (homework *HomeWorkModel, err error) {
 	if err != nil {
 		return nil, err
 	}
-
+	err = dao.DB.Model(&homework).Select("id,name").Association("Owner").Find(&homework.Owner)
+	if err != nil {
+		return nil, err
+	}
 	return homework, nil
 }
 
-func GetHomeWorkByOwnerID(ownerID int, start int, end int) (homework *[]HomeWorkModel, err error) {
+func GetHomeworkByOwnerID(ownerID int, start int, end int) (homework *[]HomeWorkModel, err error) {
 	homework = new([]HomeWorkModel)
 	err = dao.DB.Where("owner_id = ?", ownerID).Offset(start).Limit(end - start).Find(&homework).Error
 	if err != nil {

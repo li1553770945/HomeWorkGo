@@ -2,21 +2,26 @@ package models
 
 import (
 	"HomeWorkGo/dao"
+	"path/filepath"
+	"strconv"
 	"time"
 )
 
 type GroupModel struct {
-	ID        int       `json:"id,omitempty" gorm:"primary_key"`
-	Name      string    `json:"name,omitempty"  validate:"required"`
-	Desc      string    `json:"desc,omitempty"`
-	Password  string    `json:"-"  validate:"required"`
-	CreatedAt time.Time `gorm:"autoCreateTime"`
-	OwnerID   int
-	Owner     UserModel   `json:"owner,omitempty" gorm:"Foreignkey:OwnerID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"  validate:"-"`
-	Members   []UserModel `json:"members,omitempty" gorm:"many2many:group_members;"`
+	ID          int       `json:"id,omitempty" gorm:"primary_key"`
+	Name        string    `json:"name,omitempty"  validate:"required"`
+	Desc        string    `json:"desc,omitempty"`
+	Password    string    `json:"-"  validate:"required"`
+	CreatedAt   time.Time `gorm:"autoCreateTime"`
+	AllowCreate bool      `json:"allowCreate"`
+	SavePath    string    `json:"-"`
+	OwnerID     int
+	Owner       UserModel   `json:"owner,omitempty" gorm:"Foreignkey:OwnerID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"  validate:"-"`
+	Members     []UserModel `json:"members,omitempty" gorm:"many2many:group_members;"`
 }
 
 func CreateGroup(group *GroupModel) (err error) {
+	group.SavePath = filepath.ToSlash(filepath.Join(strconv.Itoa(time.Now().Year()), strconv.Itoa(int(time.Now().Month()))))
 	err = dao.DB.Create(&group).Error
 	return err
 }

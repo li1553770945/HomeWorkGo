@@ -76,18 +76,15 @@ func GetGroup(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"code": 4003, "msg": "您还未登录，请先登录"})
 		return
 	}
-	jsonData := make(map[string]interface{}) //注意该结构接受的内容
-	err := c.BindJSON(&jsonData)
-	if err != nil {
-		return
-	}
-	if jsonData["groupID"] == nil {
+
+	groupID := c.Query("groupID")
+	if groupID == "" {
 		c.JSON(http.StatusOK, gin.H{"code": 2001, "msg": "请求参数错误"})
 		return
 	}
 
-	groupID := int(jsonData["groupID"].(float64))
-	group, err := models.GetGroupByID(groupID)
+	groupIDInt, _ := strconv.Atoi(groupID)
+	group, err := models.GetGroupByID(groupIDInt)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusOK, gin.H{"code": 4004, "msg": "请求的小组不存在"})

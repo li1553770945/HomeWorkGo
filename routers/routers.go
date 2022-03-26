@@ -62,15 +62,17 @@ func SetupRouter() *gin.Engine {
 		groupRoutes.GET("/group-joined-num", controller.GetMyGroupsJoinedNum)
 
 	}
-	//homework
-	//HomeWorkRoutes := r.Group("")
-	//{
-	//
-	//	HomeWorkRoutes.POST("/work", controller.CreateWork)
-	//	HomeWorkRoutes.PUT("/work", controller.Me)
-	//	HomeWorkRoutes.GET("/login", controller.Login)
-	//
-	//}
+
+	HomeWorkRoutes := r.Group("/api")
+	{
+
+		HomeWorkRoutes.POST("/homework", controller.CreateHomework)
+		HomeWorkRoutes.GET("/homework", controller.GetHomework)
+		HomeWorkRoutes.DELETE("/homework", controller.DeleteHomework)
+		HomeWorkRoutes.GET("/homework-created", controller.GetHomeworkCreated)
+		HomeWorkRoutes.GET("/homework-created-num", controller.GetHomeworkCreatedNum)
+
+	}
 	//file
 	//FileRoutes := r.Group("")
 	//{
