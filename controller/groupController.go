@@ -4,10 +4,11 @@ import (
 	"HomeWorkGo/models"
 	"bytes"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"gorm.io/gorm"
 	"io/ioutil"
 	"net/http"
 )
@@ -26,7 +27,8 @@ func CreateGroup(c *gin.Context) {
 	var group models.GroupModel
 	data, err := c.GetRawData()
 	if err != nil {
-		fmt.Println(err.Error())
+		c.JSON(http.StatusOK, gin.H{"code": 5001, "msg": err.Error()})
+		return
 	}
 
 	c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(data))
@@ -72,16 +74,23 @@ func GetGroup(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"code": 4003, "msg": "您还未登录，请先登录"})
 		return
 	}
-	json := make(map[string]interface{}) //注意该结构接受的内容
-	c.BindJSON(&json)
-	if json["groupID"] == nil {
+	jsonData := make(map[string]interface{}) //注意该结构接受的内容
+	err := c.BindJSON(&jsonData)
+	if err != nil {
+		return
+	}
+	if jsonData["groupID"] == nil {
 		c.JSON(http.StatusOK, gin.H{"code": 2001, "msg": "请求参数错误"})
 		return
 	}
 
-	groupID := int(json["groupID"].(float64))
+	groupID := int(jsonData["groupID"].(float64))
 	group, err := models.GetGroupByID(groupID)
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusOK, gin.H{"code": 4004, "msg": "请求的小组不存在"})
+			return
+		}
 		c.JSON(http.StatusOK, gin.H{"code": 5001, "msg": err.Error()})
 		return
 	}
@@ -97,16 +106,24 @@ func DeleteGroup(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"code": 4003, "msg": "您还未登录，请先登录"})
 		return
 	}
-	json := make(map[string]interface{})
-	c.BindJSON(&json)
-	if json["groupID"] == nil {
+	jsonData := make(map[string]interface{})
+	err := c.BindJSON(&jsonData)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 2001, "msg": "请求参数错误"})
+		return
+	}
+	if jsonData["groupID"] == nil {
 		c.JSON(http.StatusOK, gin.H{"code": 2001, "msg": "请求参数错误"})
 		return
 	}
 
-	groupID := int(json["groupID"].(float64))
+	groupID := int(jsonData["groupID"].(float64))
 	group, err := models.GetGroupByID(groupID)
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusOK, gin.H{"code": 4004, "msg": "请求的小组不存在"})
+			return
+		}
 		c.JSON(http.StatusOK, gin.H{"code": 5001, "msg": err.Error()})
 		return
 	}
@@ -131,19 +148,23 @@ func GetGroupsCreated(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"code": 4003, "msg": "您还未登录，请先登录"})
 		return
 	}
-	json := make(map[string]interface{}) //注意该结构接受的内容
-	c.BindJSON(&json)
-	start := json["start"]
-	end := json["end"]
+	jsonData := make(map[string]interface{}) //注意该结构接受的内容
+	err := c.BindJSON(&jsonData)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 2001, "msg": "请求参数错误" + err.Error()})
+		return
+	}
+	start := jsonData["start"]
+	end := jsonData["end"]
 	if start == nil || end == nil {
 		c.JSON(http.StatusOK, gin.H{"code": 2001, "msg": "请求参数错误"})
 		return
 	}
 	ownerIDint := uid.(int)
-	startint := int(start.(float64))
-	endint := int(end.(float64))
+	startInt := int(start.(float64))
+	endInt := int(end.(float64))
 
-	groups, err := models.GetGroupsByOwnerID(ownerIDint, startint, endint)
+	groups, err := models.GetGroupsByOwnerID(ownerIDint, startInt, endInt)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 5001, "msg": err.Error()})
 		return

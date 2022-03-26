@@ -28,6 +28,9 @@ func GetGroupByID(groupID int) (group *GroupModel, err error) {
 		return nil, err
 	}
 	err = dao.DB.Model(&group).Select("id,name").Association("Owner").Find(&group.Owner)
+	if err != nil {
+		return nil, err
+	}
 	err = dao.DB.Model(&group).Select("id,name").Association("Members").Find(&group.Members)
 	if err != nil {
 		return nil, err

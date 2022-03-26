@@ -4,10 +4,12 @@ import (
 	"HomeWorkGo/models"
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"gorm.io/gorm"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -35,19 +37,25 @@ func Register(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"code": 4001, "msg": err.Error()})
 		return
 	}
-	jsondata := make(map[string]interface{})
-	err = json.Unmarshal(data, &jsondata)
+	jsonData := make(map[string]interface{})
+	err = json.Unmarshal(data, &jsonData)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 5001, "msg": err.Error()})
 		return
 	}
 
-	if jsondata["password"] == nil {
+	if jsonData["password"] == nil {
 		c.JSON(http.StatusOK, gin.H{"code": 4001, "msg": "提交参数错误"})
 		return
 	}
 
-	models.SetUserPasswd(&user, jsondata["password"].(string))
+	models.SetUserPasswd(&user, jsonData["password"].(string))
+
+	_, err = models.GetUserByUserName(user.Username)
+	if err == nil {
+		c.JSON(http.StatusOK, gin.H{"code": 4003, "msg": "用户名已经存在"})
+		return
+	}
 
 	err = models.CreateUser(&user)
 	if err != nil {
@@ -81,7 +89,11 @@ func Login(c *gin.Context) {
 	var user *models.UserModel
 	user, err = models.GetUserByUserName(loginRequest.Username)
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"code": 4004, "msg": "用户名或密码错误"})
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusOK, gin.H{"code": 4004, "msg": "用户名或密码错误"})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"code": 5001, "msg": err.Error()})
 		return
 	}
 	if !models.CheckUserPasswd(user, loginRequest.Password) {
