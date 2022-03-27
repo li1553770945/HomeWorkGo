@@ -88,3 +88,8 @@ func GetHomeworkJoinedNumByOwnerId(ownerID int) (num int64, err error) {
 	}
 	return num, err
 }
+
+func UpdateSubmission(submission *SubmissionModel) (err error) {
+	err = dao.DB.Save(submission).Error
+	return err
+}

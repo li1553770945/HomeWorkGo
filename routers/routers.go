@@ -83,6 +83,9 @@ func SetupRouter() *gin.Engine {
 		SubmissionRoutes.GET("/homework-joined-num", controller.GetHomeworkJoinedNum)
 		SubmissionRoutes.GET("/homework-joined", controller.GetHomeworkJoined)
 
+		SubmissionRoutes.POST("/submit", controller.Submit)
+		SubmissionRoutes.GET("/export", controller.Export)
+		SubmissionRoutes.GET("/download", controller.DownloadExport)
 	}
 	return r
 }

@@ -3,6 +3,9 @@ package models
 import (
 	"HomeWorkGo/dao"
 	"fmt"
+	"os"
+	"path/filepath"
+	"strconv"
 	"time"
 )
 
@@ -18,16 +21,34 @@ type HomeWorkModel struct {
 	Group             GroupModel        `gorm:"Foreignkey:GroupID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"  validate:"-"`
 	OwnerID           int               `validate:"required"`
 	Owner             UserModel         `json:"owner,omitempty" gorm:"Foreignkey:OwnerID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"  validate:"-"`
+	SavePath          string            `json:"-"`
 	Submissions       []SubmissionModel `json:"submissions,omitempty" gorm:"many2many:submissions;"`
+	Type              string            `json:"type"`
 }
 
 func CreateHomework(homework *HomeWorkModel) (err error) {
 	err = dao.DB.Create(&homework).Error
-	group, err := GetGroupByID(homework.GroupID)
 	if err != nil {
 		return err
 	}
 
+	homework.SavePath = filepath.ToSlash(filepath.Join(strconv.Itoa(time.Now().Year()), strconv.Itoa(int(time.Now().Month())), strconv.Itoa(homework.ID)))
+
+	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	fmt.Println(dir)
+	err = os.MkdirAll(filepath.ToSlash(filepath.Join(dir, homework.SavePath)), os.ModePerm)
+	if err != nil {
+		return err
+	}
+	err = UpdateHomework(homework)
+	if err != nil {
+		return err
+	}
+
+	group, err := GetGroupByID(homework.GroupID)
+	if err != nil {
+		return err
+	}
 	for i := 0; i < len(group.Members); i++ {
 		fmt.Println(group.Members[i].ID, homework.ID)
 		err = dao.DB.Model(&homework).Association("Submissions").Append(&SubmissionModel{OwnerID: group.Members[i].ID, HomeworkID: homework.ID})
@@ -67,4 +88,9 @@ func GetHomeworkNumByOwnerID(ownerID int) (num int64, err error) {
 func DeleteHomeworkByID(ID int) (err error) {
 	err = dao.DB.Where("id=?", ID).Delete(&HomeWorkModel{}).Error
 	return
+}
+
+func UpdateHomework(homework *HomeWorkModel) (err error) {
+	err = dao.DB.Save(homework).Error
+	return err
 }

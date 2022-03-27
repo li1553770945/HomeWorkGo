@@ -32,7 +32,7 @@ func GetUserByUserName(username string) (user *UserModel, err error) {
 
 func GetUserById(id int) (user *UserModel, err error) {
 	user = new(UserModel)
-	if err = dao.DB.Debug().Where("id=?", id).First(user).Error; err != nil {
+	if err = dao.DB.Where("id=?", id).First(user).Error; err != nil {
 		return nil, err
 	}
 	return

@@ -7,7 +7,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"net/http"
+	"os"
+	"path"
+	"path/filepath"
 	"strconv"
+	"time"
 )
 
 func GetSubmissionsByHomeworkId(c *gin.Context) {
@@ -136,6 +140,63 @@ func GetHomeworkJoined(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"code": 0, "data": homework})
 	return
+}
+func Submit(c *gin.Context) {
+	session := sessions.Default(c)
+	uid := session.Get("uid")
+
+	if uid == nil {
+		c.JSON(http.StatusOK, gin.H{"code": 4003, "msg": "您还未登录，请先登录"})
+		return
+	}
+	uidInt := uid.(int)
+	homeworkID := c.Query("homeworkID")
+
+	if homeworkID == "" {
+		c.JSON(http.StatusOK, gin.H{"code": 2001, "msg": "请求参数错误"})
+		return
+	}
+
+	homeworkIDInt, _ := strconv.Atoi(homeworkID)
+	submission, err := models.GetSubmissionByHomeworkAndOwner(uidInt, homeworkIDInt)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusOK, gin.H{"code": 4004, "msg": "您没有参与该次作业"})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"code": 5001, "msg": err.Error()})
+		return
+	}
+	submission.SubmitAt = time.Now()
+	user, err := models.GetUserById(uidInt)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 5001, "msg": err.Error()})
+		return
+	}
+	file, err := c.FormFile("file")
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 5001, "msg": err.Error()})
+		return
+	}
+	homework, err := models.GetHomeworkByID(homeworkIDInt)
+
+	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+
+	submission.FileName = user.Username + user.Name + path.Ext(file.Filename)
+	full_path := filepath.ToSlash(filepath.Join(dir, homework.SavePath, submission.FileName))
+	err = c.SaveUploadedFile(file, full_path)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 5001, "msg": err.Error()})
+		return
+	}
+	submission.Finished = true
+	err = models.UpdateSubmission(submission)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 5001, "msg": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"code": 0})
+
 }
 
 func Export(c *gin.Context) {
