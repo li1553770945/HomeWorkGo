@@ -80,6 +80,9 @@ func SetupRouter() *gin.Engine {
 		SubmissionRoutes.GET("/submissions", controller.GetSubmissionsByHomeworkId)
 		SubmissionRoutes.GET("/submission-file", controller.GetSubmissionFileById)
 
+		SubmissionRoutes.GET("/homework-joined-num", controller.GetHomeworkJoinedNum)
+		SubmissionRoutes.GET("/homework-joined", controller.GetHomeworkJoined)
+
 	}
 	return r
 }

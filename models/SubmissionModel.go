@@ -39,3 +39,30 @@ func GetSubmissionByID(ID int) (submission *SubmissionModel, err error) {
 	}
 	return submission, err
 }
+
+func GetHomeworkJoinedByOwnerId(ownerID int, start int, end int) (homework *[]HomeWorkModel, err error) {
+	homeworks := new([]HomeWorkModel)
+	submissions := new([]SubmissionModel)
+	err = dao.DB.Where("owner_id = ?", ownerID).Offset(start).Limit(end - start).Find(submissions).Error
+	if err != nil {
+		return nil, err
+	}
+	for i := 0; i < len(*submissions); i++ {
+		homework, err := GetHomeworkByID((*submissions)[i].HomeworkID)
+		if err != nil {
+			return nil, err
+		}
+		*homeworks = append(*homeworks, *homework)
+	}
+	return homeworks, nil
+
+}
+
+func GetHomeworkJoinedNumByOwnerId(ownerID int) (num int64, err error) {
+
+	err = dao.DB.Model(&SubmissionModel{}).Where("owner_id = ?", ownerID).Count(&num).Error
+	if err != nil {
+		return 0, err
+	}
+	return num, err
+}
