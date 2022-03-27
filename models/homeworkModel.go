@@ -2,6 +2,7 @@ package models
 
 import (
 	"HomeWorkGo/dao"
+	"fmt"
 	"time"
 )
 
@@ -22,6 +23,15 @@ type HomeWorkModel struct {
 
 func CreateHomework(homework *HomeWorkModel) (err error) {
 	err = dao.DB.Create(&homework).Error
+	group, err := GetGroupByID(homework.GroupID)
+	if err != nil {
+		return err
+	}
+
+	for i := 0; i < len(group.Members); i++ {
+		fmt.Println(group.Members[i].ID, homework.ID)
+		err = dao.DB.Model(&homework).Association("Submissions").Append(&SubmissionModel{OwnerID: group.Members[i].ID, HomeworkID: homework.ID})
+	}
 	return err
 }
 

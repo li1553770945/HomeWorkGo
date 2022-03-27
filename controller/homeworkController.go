@@ -38,6 +38,20 @@ func CreateHomework(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"code": 4001, "msg": err.Error()})
 		return
 	}
+	group, err := models.GetGroupByID(homework.GroupID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusOK, gin.H{"code": 4004, "msg": "使用了不存在的小组"})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"code": 5001, "msg": err.Error()})
+		return
+	}
+	joined, err := models.CheckJoin(homework.GroupID, uidint)
+	if !(group.OwnerID == uidint || (group.AllowCreate && joined)) {
+		c.JSON(http.StatusOK, gin.H{"code": 4003, "msg": "使用了没有权限使用的小组"})
+		return
+	}
 
 	err = models.CreateHomework(&homework)
 

@@ -65,7 +65,11 @@ func QuitGroup(c *gin.Context) {
 
 	uidint := uid.(int)
 	json := make(map[string]interface{})
-	c.BindJSON(&json)
+	err := c.BindJSON(&json)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 2001, "msg": "请求参数错误"})
+		return
+	}
 	if json["groupID"] == nil {
 		c.JSON(http.StatusOK, gin.H{"code": 2001, "msg": "请求参数错误"})
 		return

@@ -73,14 +73,13 @@ func SetupRouter() *gin.Engine {
 		HomeWorkRoutes.GET("/homework-created-num", controller.GetHomeworkCreatedNum)
 
 	}
-	//file
-	//FileRoutes := r.Group("")
-	//{
-	//
-	//	FileRoutes.POST("/file", controller.Upload)
-	//	FileRoutes.GET("/get", controller.Me)
-	//	FileRoutes.POST("/login", controller.Login)
-	//
-	//}
+
+	SubmissionRoutes := r.Group("/api")
+	{
+
+		SubmissionRoutes.GET("/submissions", controller.GetSubmissionsByHomeworkId)
+		SubmissionRoutes.GET("/submission-file", controller.GetSubmissionFileById)
+
+	}
 	return r
 }

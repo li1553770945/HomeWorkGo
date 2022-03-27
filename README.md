@@ -2,8 +2,8 @@
 之前使用Django开发了班级作业网站管理系统，现在仍在使用中，后端请见[HomeWork](https://github.com/li1553770945/HomeWork)
 ,感觉当初的设计有些不完善的地方，现在打算用Go进行重构。因为第一次接触Go，如果有不对的地方还希望批评指正。
 
+有关项目的详细信息，请见我的[个人博客](http://blog.peacesheep.xyz/categories/?category=%E4%BD%9C%E4%B8%9A%E7%BD%91%E7%AB%99%E5%90%8E%E7%AB%AF%E8%AE%BE%E8%AE%A1)
 <!-- more -->
-
 ## 主要功能
 
 ### 用户管理模块
