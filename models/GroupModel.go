@@ -2,6 +2,7 @@ package models
 
 import (
 	"HomeWorkGo/dao"
+	"os"
 	"path/filepath"
 	"strconv"
 	"time"
@@ -22,6 +23,11 @@ type GroupModel struct {
 
 func CreateGroup(group *GroupModel) (err error) {
 	group.SavePath = filepath.ToSlash(filepath.Join(strconv.Itoa(time.Now().Year()), strconv.Itoa(int(time.Now().Month()))))
+	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	err = os.MkdirAll(filepath.ToSlash(filepath.Join(dir, group.SavePath)), os.ModePerm)
+	if err != nil {
+		return err
+	}
 	err = dao.DB.Create(&group).Error
 	return err
 }

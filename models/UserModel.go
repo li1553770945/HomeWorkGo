@@ -8,15 +8,14 @@ import (
 )
 
 type UserModel struct {
-	ID           int         `json:"id,omitempty" gorm:"primaryKey"`
-	Username     string      `json:"username,omitempty"  validate:"required" gorm:"type:varchar(30);uniqueIndex"`
-	Name         string      `json:"name,omitempty"  validate:"required"`
-	Password     string      `json:"-"  validate:"-"`
-	Validation   string      `json:"-"`
-	Status       int         `json:"status,omitempty"`
-	CreatedAt    time.Time   `json:"created_at,omitempty" gorm:"autoCreateTime,omitempty"`
-	LastLogin    time.Time   `json:"last_login,omitempty"`
-	GroupsJoined []UserModel `json:"joined_groups,omitempty" gorm:"many2many:group_members;"`
+	ID         int       `json:"id,omitempty" gorm:"primaryKey"`
+	Username   string    `json:"username,omitempty"  validate:"required" gorm:"type:varchar(30);uniqueIndex"`
+	Name       string    `json:"name,omitempty"  validate:"required"`
+	Password   string    `json:"-"  validate:"-"`
+	Validation string    `json:"-"`
+	Status     int       `json:"status,omitempty"`
+	CreatedAt  time.Time `json:"created_at,omitempty" gorm:"autoCreateTime,omitempty"`
+	LastLogin  time.Time `json:"last_login,omitempty"`
 }
 
 func CreateUser(user *UserModel) (err error) {

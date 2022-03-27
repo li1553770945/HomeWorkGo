@@ -92,6 +92,19 @@ func GetHomework(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"code": 5001, "msg": err.Error()})
 		return
 	}
+	if homework.OwnerID != uid.(int) {
+		_, err := models.GetSubmissionByHomeworkAndOwner(uid.(int), homeworkIDInt)
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				c.JSON(http.StatusOK, gin.H{"code": 4003, "msg": "您没有权限查看"})
+				return
+			}
+			c.JSON(http.StatusOK, gin.H{"code": 5001, "msg": err.Error()})
+			return
+		}
+
+	}
+
 	c.JSON(http.StatusOK, gin.H{"code": 0, "data": homework})
 	return
 }

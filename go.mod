@@ -3,6 +3,7 @@ module HomeWorkGo
 go 1.13
 
 require (
+	github.com/fatih/structs v1.1.0 // indirect
 	github.com/gin-contrib/sessions v0.0.4
 	github.com/gin-gonic/gin v1.7.4
 	github.com/go-playground/validator/v10 v10.10.1
