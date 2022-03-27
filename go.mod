@@ -7,6 +7,7 @@ require (
 	github.com/gin-contrib/sessions v0.0.4
 	github.com/gin-gonic/gin v1.7.4
 	github.com/go-playground/validator/v10 v10.10.1
+	github.com/go-redis/redis v6.15.9+incompatible // indirect
 	github.com/jinzhu/gorm v1.9.12
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/smartystreets/goconvey v1.6.4 // indirect

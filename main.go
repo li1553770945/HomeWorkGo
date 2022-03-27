@@ -17,8 +17,12 @@ func main() {
 	}
 	// 创建数据库
 	// 连接数据库
-
-	err := dao.InitMySQL(setting.Conf.MySQLConfig)
+	err := dao.InitRedis(setting.Conf.RedisConfig)
+	if err != nil {
+		fmt.Printf("init redis failed, err:%v\n", err)
+		return
+	}
+	err = dao.InitMySQL(setting.Conf.MySQLConfig)
 	if err != nil {
 		fmt.Printf("init mysql failed, err:%v\n", err)
 		return
