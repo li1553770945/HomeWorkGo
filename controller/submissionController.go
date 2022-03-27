@@ -1,11 +1,17 @@
 package controller
 
 import (
+	"HomeWorkGo/dao"
 	"HomeWorkGo/models"
+	"archive/zip"
 	"errors"
+	"fmt"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis"
 	"gorm.io/gorm"
+	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"os"
 	"path"
@@ -13,6 +19,18 @@ import (
 	"strconv"
 	"time"
 )
+
+func GetToken() (token string) {
+	rand.Seed(time.Now().UnixNano())
+	str := "0123456789abcdefghijklmnopqrstuvwxyz"
+	bytes := []byte(str)
+	var result []byte
+	for i := 0; i < 10; i++ {
+		result = append(result, bytes[rand.Intn(len(bytes))])
+	}
+
+	return string(result) + time.Now().Format("20060102150405")
+}
 
 func GetSubmissionsByHomeworkId(c *gin.Context) {
 	session := sessions.Default(c)
@@ -26,7 +44,7 @@ func GetSubmissionsByHomeworkId(c *gin.Context) {
 	homeworkID := c.Query("homeworkID")
 
 	if homeworkID == "" {
-		c.JSON(http.StatusOK, gin.H{"code": 2001, "msg": "请求参数错误"})
+		c.JSON(http.StatusOK, gin.H{"code": 4001, "msg": "请求参数错误"})
 		return
 	}
 
@@ -63,21 +81,37 @@ func GetSubmissionFileById(c *gin.Context) {
 	}
 	uidInt := uid.(int)
 	submissionID := c.Query("submissionID")
-
-	if submissionID == "" {
-		c.JSON(http.StatusOK, gin.H{"code": 2001, "msg": "请求参数错误"})
+	homeworkID := c.Query("homeworkID")
+	if submissionID == "" && homeworkID == "" {
+		c.JSON(http.StatusOK, gin.H{"code": 4001, "msg": "请求参数错误"})
 		return
 	}
-
-	submissionIDInt, _ := strconv.Atoi(submissionID)
-	submission, err := models.GetSubmissionByID(submissionIDInt)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			c.JSON(http.StatusOK, gin.H{"code": 4004, "msg": "请求的作业不存在"})
+	homeworkIDInt, _ := strconv.Atoi(homeworkID)
+	submission := &models.SubmissionModel{}
+	if submissionID == "" {
+		submissionTemp, err := models.GetSubmissionByHomeworkAndOwner(uidInt, homeworkIDInt)
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				c.JSON(http.StatusOK, gin.H{"code": 4003, "msg": "您没有权限查看该内容"})
+				return
+			}
+			c.JSON(http.StatusOK, gin.H{"code": 5001, "msg": err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, gin.H{"code": 5001, "msg": err.Error()})
-		return
+		submission = submissionTemp
+	} else {
+		submissionIDInt, _ := strconv.Atoi(submissionID)
+		submissionTemp, err := models.GetSubmissionByID(submissionIDInt)
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				c.JSON(http.StatusOK, gin.H{"code": 4004, "msg": "请求的提交不存在"})
+				return
+			}
+			c.JSON(http.StatusOK, gin.H{"code": 5001, "msg": err.Error()})
+			return
+		}
+		submission = submissionTemp
+
 	}
 
 	if submission.OwnerID != uidInt {
@@ -91,7 +125,19 @@ func GetSubmissionFileById(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"code": 4004, "msg": "还没有完成该作业"})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"code": 0})
+
+	homework, _ := models.GetHomeworkByID(submission.HomeworkID)
+
+	dir, _ := filepath.Abs(filepath.Dir(os.Args[0]))
+	fullPath := filepath.ToSlash(filepath.Join(dir, homework.SavePath, submission.FileName))
+	submissionIDString := strconv.Itoa(submission.ID)
+	token := "file" + submissionIDString + GetToken()
+	err := dao.RDB.Set(token, fullPath, 60*time.Second).Err()
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 5001, "msg": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"code": 0, "token": token})
 	return
 }
 
@@ -126,7 +172,7 @@ func GetHomeworkJoined(c *gin.Context) {
 	start, end := c.Query("start"), c.Query("end")
 
 	if start == "" || end == "" {
-		c.JSON(http.StatusOK, gin.H{"code": 2001, "msg": "请求参数错误"})
+		c.JSON(http.StatusOK, gin.H{"code": 4001, "msg": "请求参数错误"})
 		return
 	}
 	ownerIDint := uid.(int)
@@ -153,7 +199,7 @@ func Submit(c *gin.Context) {
 	homeworkID := c.Query("homeworkID")
 
 	if homeworkID == "" {
-		c.JSON(http.StatusOK, gin.H{"code": 2001, "msg": "请求参数错误"})
+		c.JSON(http.StatusOK, gin.H{"code": 4001, "msg": "请求参数错误"})
 		return
 	}
 
@@ -179,9 +225,7 @@ func Submit(c *gin.Context) {
 		return
 	}
 	homework, err := models.GetHomeworkByID(homeworkIDInt)
-
 	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
-
 	submission.FileName = user.Username + user.Name + path.Ext(file.Filename)
 	full_path := filepath.ToSlash(filepath.Join(dir, homework.SavePath, submission.FileName))
 	err = c.SaveUploadedFile(file, full_path)
@@ -199,6 +243,57 @@ func Submit(c *gin.Context) {
 
 }
 
+func ExportThread(homeworkID string, name string, savePath string) {
+	token := "export" + homeworkID + GetToken()
+	dir, _ := filepath.Abs(filepath.Dir(os.Args[0]))
+	fullPath := filepath.ToSlash(filepath.Join(dir, savePath, name+".zip"))
+
+	f, err := ioutil.ReadDir(filepath.ToSlash(filepath.Join(dir, savePath)))
+	if err != nil {
+		fmt.Println("压缩目录读取错误")
+		dao.RDB.Del("export" + homeworkID)
+		return
+	}
+
+	zipTarget := fullPath
+	fZip, _ := os.Create(zipTarget)
+	w := zip.NewWriter(fZip)
+
+	for _, file := range f {
+		fw, err := w.Create(file.Name())
+		if err != nil {
+			fmt.Println("创建失败", err)
+			dao.RDB.Del("export" + homeworkID)
+			return
+		}
+
+		fileContent, err := ioutil.ReadFile(filepath.ToSlash(filepath.Join(dir, savePath, file.Name())))
+		if err != nil {
+			fmt.Println("读取文件错误")
+			dao.RDB.Del("export" + homeworkID)
+			return
+		}
+		_, err = fw.Write(fileContent)
+		if err != nil {
+			fmt.Println("写文件错误")
+			dao.RDB.Del("export" + homeworkID)
+			return
+		}
+	}
+	err = w.Close()
+	if err != nil {
+		return
+	}
+	fmt.Printf("打包完成")
+	dao.RDB.Set("export"+homeworkID, token, 3*time.Minute)
+	dao.RDB.Set(token, fullPath, 3*time.Minute)
+}
+
+type ExportStruct struct {
+	Done  bool
+	Token string
+}
+
 func Export(c *gin.Context) {
 	session := sessions.Default(c)
 	uid := session.Get("uid")
@@ -211,7 +306,7 @@ func Export(c *gin.Context) {
 	homeworkID := c.Query("homeworkID")
 
 	if homeworkID == "" {
-		c.JSON(http.StatusOK, gin.H{"code": 2001, "msg": "请求参数错误"})
+		c.JSON(http.StatusOK, gin.H{"code": 4001, "msg": "请求参数错误"})
 		return
 	}
 
@@ -225,26 +320,63 @@ func Export(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"code": 5001, "msg": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"code": 0, "data": homework})
-	return
-}
+	uidInt := uid.(int)
+	if homework.OwnerID != uidInt {
+		c.JSON(http.StatusOK, gin.H{"code": 4003, "msg": "您不是该作业的创建者，无权进行导出操作"})
+		return
+	}
+	exportStruct := new(ExportStruct)
+	exportStruct.Token = ""
+	exportStruct.Done = false
+	token, err := dao.RDB.Get("export" + homeworkID).Result()
+	if err == nil { //没有错误，两种情况：导出中、导出完成
+		if token == "" {
 
-func DownloadExport(c *gin.Context) {
-	session := sessions.Default(c)
-	uid := session.Get("uid")
+			c.JSON(http.StatusOK, gin.H{"code": 0, "data": exportStruct})
+			return
+		} else {
 
-	if uid == nil {
-		c.JSON(http.StatusOK, gin.H{"code": 4003, "msg": "您还未登录，请先登录"})
+			exportStruct.Token = token
+			exportStruct.Done = true
+			c.JSON(http.StatusOK, gin.H{"code": 0, "data": exportStruct})
+			return
+		}
+
+	} else {
+		if err == redis.Nil {
+
+			dao.RDB.Set("export"+homeworkID, "", 3*time.Hour)
+			go ExportThread(homeworkID, homework.Name, homework.SavePath)
+			c.JSON(http.StatusOK, gin.H{"code": 0, "data": exportStruct})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"code": 5001, "msg": err.Error()})
 		return
 	}
 
-	ownerIDint := uid.(int)
+}
 
-	num, err := models.GetHomeworkJoinedNumByOwnerId(ownerIDint)
+func Download(c *gin.Context) {
+	token := c.Query("token")
+	if token == "" {
+		c.Status(404)
+		c.JSON(http.StatusOK, gin.H{"code": 4001, "msg": "请求参数错误"})
+		return
+	}
+	fullPath, err := dao.RDB.Get(token).Result()
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 5001, "msg": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"code": 0, "data": num})
+	if fullPath == "" {
+		c.Status(404)
+		c.JSON(http.StatusOK, gin.H{"code": 4004, "msg": "token不存在或已经过期"})
+		return
+	}
+
+	_, fileName := filepath.Split(fullPath)
+	c.Writer.Header().Add("Content-Disposition", fmt.Sprintf("attachment;filename=%s", fileName))
+	c.File(fullPath)
+
 	return
 }

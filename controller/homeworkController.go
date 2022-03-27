@@ -78,7 +78,7 @@ func GetHomework(c *gin.Context) {
 	homeworkID := c.Query("homeworkID")
 
 	if homeworkID == "" {
-		c.JSON(http.StatusOK, gin.H{"code": 2001, "msg": "请求参数错误"})
+		c.JSON(http.StatusOK, gin.H{"code": 4001, "msg": "请求参数错误"})
 		return
 	}
 
@@ -120,11 +120,11 @@ func DeleteHomework(c *gin.Context) {
 	jsonData := make(map[string]interface{})
 	err := c.BindJSON(&jsonData)
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"code": 2001, "msg": "请求参数错误"})
+		c.JSON(http.StatusOK, gin.H{"code": 4001, "msg": "请求参数错误"})
 		return
 	}
 	if jsonData["homeworkID"] == nil {
-		c.JSON(http.StatusOK, gin.H{"code": 2001, "msg": "请求参数错误"})
+		c.JSON(http.StatusOK, gin.H{"code": 4001, "msg": "请求参数错误"})
 		return
 	}
 
@@ -162,7 +162,7 @@ func GetHomeworkCreated(c *gin.Context) {
 	start, end := c.Query("start"), c.Query("end")
 
 	if start == "" || end == "" {
-		c.JSON(http.StatusOK, gin.H{"code": 2001, "msg": "请求参数错误"})
+		c.JSON(http.StatusOK, gin.H{"code": 4001, "msg": "请求参数错误"})
 		return
 	}
 	ownerIDint := uid.(int)

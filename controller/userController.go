@@ -77,12 +77,12 @@ func Login(c *gin.Context) {
 
 	err := c.BindJSON(&loginRequest)
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"code": 2001, "msg": err.Error()})
+		c.JSON(http.StatusOK, gin.H{"code": 4001, "msg": err.Error()})
 		return
 	}
 	err = validate.Struct(loginRequest)
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"code": 2001, "msg": err.Error()})
+		c.JSON(http.StatusOK, gin.H{"code": 4001, "msg": err.Error()})
 		return
 	}
 

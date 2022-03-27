@@ -79,7 +79,7 @@ func GetGroup(c *gin.Context) {
 
 	groupID := c.Query("groupID")
 	if groupID == "" {
-		c.JSON(http.StatusOK, gin.H{"code": 2001, "msg": "请求参数错误"})
+		c.JSON(http.StatusOK, gin.H{"code": 4001, "msg": "请求参数错误"})
 		return
 	}
 
@@ -108,11 +108,11 @@ func DeleteGroup(c *gin.Context) {
 	jsonData := make(map[string]interface{})
 	err := c.BindJSON(&jsonData)
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"code": 2001, "msg": "请求参数错误"})
+		c.JSON(http.StatusOK, gin.H{"code": 4001, "msg": "请求参数错误"})
 		return
 	}
 	if jsonData["groupID"] == nil {
-		c.JSON(http.StatusOK, gin.H{"code": 2001, "msg": "请求参数错误"})
+		c.JSON(http.StatusOK, gin.H{"code": 4001, "msg": "请求参数错误"})
 		return
 	}
 
@@ -151,7 +151,7 @@ func GetGroupsCreated(c *gin.Context) {
 	start := c.Query("start")
 	end := c.Query("end")
 	if start == "" || end == "" {
-		c.JSON(http.StatusOK, gin.H{"code": 2001, "msg": "请求参数错误"})
+		c.JSON(http.StatusOK, gin.H{"code": 4001, "msg": "请求参数错误"})
 		return
 	}
 	ownerIDint := uid.(int)

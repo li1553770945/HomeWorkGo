@@ -85,7 +85,7 @@ func SetupRouter() *gin.Engine {
 
 		SubmissionRoutes.POST("/submit", controller.Submit)
 		SubmissionRoutes.GET("/export", controller.Export)
-		SubmissionRoutes.GET("/download", controller.DownloadExport)
+		SubmissionRoutes.GET("/download", controller.Download)
 	}
 	return r
 }
