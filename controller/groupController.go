@@ -53,16 +53,12 @@ func CreateGroup(c *gin.Context) {
 	err = models.CreateGroup(&group)
 
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"code": 4001, "msg": err.Error()})
-		return
-	}
-
-	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 5001, "msg": err.Error()})
 		return
 	} else {
 		c.JSON(http.StatusOK, gin.H{
 			"code": 0,
+			"data": group.ID,
 		})
 		return
 	}

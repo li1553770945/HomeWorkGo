@@ -2,8 +2,10 @@ package controller
 
 import (
 	"HomeWorkGo/models"
+	"errors"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 	"net/http"
 	"strconv"
 )
@@ -37,6 +39,10 @@ func JoinGroup(c *gin.Context) {
 	}
 	group, err := models.GetGroupByID(groupID)
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusOK, gin.H{"code": 4004, "msg": "请求的小组不存在"})
+			return
+		}
 		c.JSON(http.StatusOK, gin.H{"code": 5001, "msg": err.Error()})
 		return
 	}

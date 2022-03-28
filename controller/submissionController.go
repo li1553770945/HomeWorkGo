@@ -365,6 +365,11 @@ func Download(c *gin.Context) {
 	}
 	fullPath, err := dao.RDB.Get(token).Result()
 	if err != nil {
+		if err == redis.Nil {
+			c.Status(404)
+			c.JSON(http.StatusOK, gin.H{"code": 4004, "msg": "token不存在或已经过期"})
+			return
+		}
 		c.JSON(http.StatusOK, gin.H{"code": 5001, "msg": err.Error()})
 		return
 	}

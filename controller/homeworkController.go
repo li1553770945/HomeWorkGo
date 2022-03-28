@@ -61,6 +61,7 @@ func CreateHomework(c *gin.Context) {
 	} else {
 		c.JSON(http.StatusOK, gin.H{
 			"code": 0,
+			"data": homework.ID,
 		})
 		return
 	}
