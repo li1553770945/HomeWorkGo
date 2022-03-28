@@ -55,6 +55,7 @@ func SetupRouter() *gin.Engine {
 		HomeWorkRoutes.POST("/homework", controller.CreateHomework)
 		HomeWorkRoutes.GET("/homework", controller.GetHomework)
 		HomeWorkRoutes.DELETE("/homework", controller.DeleteHomework)
+		HomeWorkRoutes.PUT("/homework", controller.UpdateHomework)
 		HomeWorkRoutes.GET("/homework-created", controller.GetHomeworkCreated)
 		HomeWorkRoutes.GET("/homework-created-num", controller.GetHomeworkCreatedNum)
 

@@ -225,6 +225,11 @@ func Submit(c *gin.Context) {
 		return
 	}
 	homework, err := models.GetHomeworkByID(homeworkIDInt)
+	if time.Now().After(homework.EndTime) && !homework.CanSubmitAfterEnd {
+		c.JSON(http.StatusOK, gin.H{"code": 4003, "msg": "抱歉，该作业提交截至时间已过"})
+		return
+	}
+
 	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
 	submission.FileName = user.Username + user.Name + path.Ext(file.Filename)
 	full_path := filepath.ToSlash(filepath.Join(dir, homework.SavePath, submission.FileName))

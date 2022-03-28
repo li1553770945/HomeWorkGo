@@ -59,3 +59,8 @@ func DeleteGroupByID(groupID int) (err error) {
 	err = dao.DB.Where("id=?", groupID).Delete(&GroupModel{}).Error
 	return
 }
+
+func UpdateGroup(group *GroupModel) (err error) {
+	err = dao.DB.Save(group).Error
+	return err
+}
