@@ -10,13 +10,13 @@ import (
 )
 
 type HomeWorkModel struct {
-	ID                int               `json:"id,omitempty" gorm:"primary_key"`
-	Name              string            `json:"name"  validate:"required"`
-	Desc              string            `json:"desc"`
-	Subject           string            `json:"subject" validate:"required"`
-	CreatedAt         time.Time         `gorm:"autoCreateTime"`
-	EndTime           time.Time         `json:"endTime" validate:"required"`
-	CanSubmitAfterEnd bool              `validate:"required"`
+	ID                int       `json:"id,omitempty" gorm:"primary_key"`
+	Name              string    `json:"name"  validate:"required"`
+	Desc              string    `json:"desc"`
+	Subject           string    `json:"subject" validate:"required"`
+	CreatedAt         time.Time `gorm:"autoCreateTime"`
+	EndTime           time.Time `json:"endtime" validate:"required"`
+	CanSubmitAfterEnd bool
 	GroupID           int               `validate:"required"`
 	Group             GroupModel        `gorm:"Foreignkey:GroupID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"  validate:"-"`
 	OwnerID           int               `validate:"required"`
@@ -71,7 +71,7 @@ func GetHomeworkByID(groupID int) (homework *HomeWorkModel, err error) {
 
 func GetHomeworkByOwnerID(ownerID int, start int, end int) (homework *[]HomeWorkModel, err error) {
 	homework = new([]HomeWorkModel)
-	err = dao.DB.Where("owner_id = ?", ownerID).Offset(start).Limit(end - start).Find(&homework).Error
+	err = dao.DB.Where("owner_id = ?", ownerID).Order("created_at desc").Offset(start).Limit(end - start).Find(&homework).Error
 	if err != nil {
 		return nil, err
 	}

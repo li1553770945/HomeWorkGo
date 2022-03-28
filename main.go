@@ -32,7 +32,7 @@ func main() {
 		fmt.Printf("migrate failed, err:%v\n", err)
 		return
 	}
-	err = dao.DB.AutoMigrate(&models.Todo{}, &models.UserModel{}, &models.GroupModel{}, &models.HomeWorkModel{}, &models.SubmissionModel{})
+	err = dao.DB.AutoMigrate(&models.UserModel{}, &models.GroupModel{}, &models.HomeWorkModel{}, &models.SubmissionModel{})
 	if err != nil {
 		fmt.Printf("migrate failed, err:%v\n", err)
 		return

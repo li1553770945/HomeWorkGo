@@ -54,11 +54,6 @@ func UpdateUser(user *UserModel) (err error) {
 	return err
 }
 
-func DeleteUser(id string) (err error) {
-	err = dao.DB.Where("id=?", id).Delete(&Todo{}).Error
-	return
-}
-
 type LoginRequest struct {
 	Username string `json:"username" validate:"required"`
 	Password string `json:"password" validate:"required"`
