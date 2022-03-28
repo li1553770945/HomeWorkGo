@@ -37,6 +37,9 @@ func GetGroupJoined(uid int, start int, end int) (groups *[]GroupModel, err erro
 	}
 	groups = new([]GroupModel)
 	groupMembers := new([]GroupMemberModel)
+	if end-start > 100 {
+		end = start + 100
+	}
 	dao.DB.Model(&GroupMemberModel{}).Order("created_at desc").Offset(start).Limit(end-start).Where("user_model_id = ?", uid).Find(&groupMembers)
 	err = dao.DB.Model(&groupMembers).Association("Group").Find(&groups)
 	for i := 0; i < len(*groups); i++ {

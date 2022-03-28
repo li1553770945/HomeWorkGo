@@ -43,6 +43,9 @@ func GetSubmissionByID(ID int) (submission *SubmissionModel, err error) {
 }
 
 func GetHomeworkJoinedByOwnerId(ownerID int, start int, end int) (results *[]map[string]interface{}, err error) {
+	if end-start > 100 {
+		end = start + 100
+	}
 	results = new([]map[string]interface{})
 	submissions := new([]SubmissionModel)
 	err = dao.DB.Order("created_at desc").Where("owner_id = ?", ownerID).Offset(start).Limit(end - start).Find(submissions).Error

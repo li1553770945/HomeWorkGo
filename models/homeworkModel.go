@@ -71,6 +71,9 @@ func GetHomeworkByID(groupID int) (homework *HomeWorkModel, err error) {
 
 func GetHomeworkByOwnerID(ownerID int, start int, end int) (homework *[]HomeWorkModel, err error) {
 	homework = new([]HomeWorkModel)
+	if end-start > 100 {
+		end = start + 100
+	}
 	err = dao.DB.Where("owner_id = ?", ownerID).Order("created_at desc").Offset(start).Limit(end - start).Find(&homework).Error
 	if err != nil {
 		return nil, err

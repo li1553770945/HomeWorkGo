@@ -41,6 +41,9 @@ func GetGroupByID(groupID int) (group *GroupModel, err error) {
 
 func GetGroupsByOwnerID(ownerID int, start int, end int) (groups *[]GroupModel, err error) {
 	groups = new([]GroupModel)
+	if end-start > 100 {
+		end = start + 100
+	}
 	err = dao.DB.Where("owner_id = ?", ownerID).Order("created_at desc").Offset(start).Limit(end - start).Find(&groups).Error
 	if err != nil {
 		return nil, err
