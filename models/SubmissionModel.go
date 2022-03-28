@@ -9,13 +9,15 @@ import (
 type SubmissionModel struct {
 	ID         int       `json:"id,omitempty" gorm:"primary_key"`
 	CreatedAt  time.Time `gorm:"autoCreateTime"`
+	EndTime    time.Time `json:"-"`
 	SubmitAt   time.Time
 	HomeworkID int
 	Homework   HomeWorkModel `json:"-" gorm:"Foreignkey:HomeworkID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"  validate:"-"`
 	OwnerID    int
 	Owner      UserModel `json:"owner,omitempty" gorm:"Foreignkey:OwnerID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"  validate:"-"`
-	FileName   string
-	Finished   bool
+
+	FileName string
+	Finished bool
 }
 
 func GetSubmissionsByHomeworkID(homeworkID int) (submissions *[]SubmissionModel, err error) {
@@ -85,7 +87,7 @@ func GetHomeworkNotFinishedByOwnerId(ownerID int, start int, end int) (results *
 	}
 	results = new([]map[string]interface{})
 	submissions := new([]SubmissionModel)
-	err = dao.DB.Order("created_at desc").Where("owner_id = ? AND finished = ? ", ownerID, 0).Offset(start).Limit(end - start).Find(submissions).Error
+	err = dao.DB.Order("end_time desc").Where("owner_id = ? AND finished = ? ", ownerID, 0).Offset(start).Limit(end - start).Find(submissions).Error
 	if err != nil {
 		return nil, err
 	}

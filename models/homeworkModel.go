@@ -51,7 +51,7 @@ func CreateHomework(homework *HomeWorkModel) (err error) {
 	}
 	for i := 0; i < len(group.Members); i++ {
 		fmt.Println(group.Members[i].ID, homework.ID)
-		err = dao.DB.Model(&homework).Association("Submissions").Append(&SubmissionModel{OwnerID: group.Members[i].ID, HomeworkID: homework.ID})
+		err = dao.DB.Model(&homework).Association("Submissions").Append(&SubmissionModel{OwnerID: group.Members[i].ID, HomeworkID: homework.ID, EndTime: homework.EndTime})
 	}
 	return err
 }
@@ -94,6 +94,20 @@ func DeleteHomeworkByID(ID int) (err error) {
 }
 
 func UpdateHomework(homework *HomeWorkModel) (err error) {
+	homework_before, err := GetHomeworkByID(homework.ID)
+	if homework_before.EndTime != homework.EndTime {
+		submissions, err := GetSubmissionsByHomeworkID(homework.ID)
+		if err != nil {
+			return err
+		}
+		for i := 0; i < len(*submissions); i++ {
+			(*submissions)[i].EndTime = homework.EndTime
+			err := UpdateSubmission(&(*submissions)[i])
+			if err != nil {
+				return err
+			}
+		}
+	}
 	err = dao.DB.Save(homework).Error
 	return err
 }
