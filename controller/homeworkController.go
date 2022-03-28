@@ -9,6 +9,7 @@ import (
 	"gorm.io/gorm"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 func CreateHomework(c *gin.Context) {
@@ -140,9 +141,47 @@ func UpdateHomework(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"ode": 4003, "msg": "您没有权限执行该操作"})
 		return
 	}
-	err = c.BindJSON(&homework)
-	if err != nil || homework.ID != homeworkIDInt {
-		c.JSON(http.StatusOK, gin.H{"code": 4001, "msg": "请求参数错误"})
+
+	jsonData := make(map[string]interface{})
+	err = c.BindJSON(&jsonData)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 5001, "msg": err.Error()})
+		return
+	}
+	name, exist := jsonData["name"]
+	if exist {
+		homework.Name = name.(string)
+	}
+	desc, exist := jsonData["desc"]
+	if exist {
+		homework.Desc = desc.(string)
+	}
+	subject, exist := jsonData["subject"]
+	if exist {
+		homework.Subject = subject.(string)
+	}
+	endtime, exist := jsonData["endtime"]
+	if exist {
+		ts, err := time.Parse(time.RFC3339, endtime.(string))
+		if err != nil {
+			c.JSON(http.StatusOK, gin.H{"code": 5001, "msg": err.Error()})
+			return
+		}
+		homework.EndTime = ts
+	}
+	canSubmitAfterEnd, exist := jsonData["canSubmitAfterEnd"]
+	if exist {
+		homework.CanSubmitAfterEnd = canSubmitAfterEnd.(bool)
+	}
+
+	type_, exist := jsonData["type"]
+	if exist {
+		homework.Type = type_.(string)
+	}
+	validate := validator.New()
+	err = validate.Struct(homework)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 4001, "msg": err.Error()})
 		return
 	}
 	err = models.UpdateHomework(homework)

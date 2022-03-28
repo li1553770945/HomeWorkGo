@@ -214,11 +214,27 @@ func UpdateGroup(c *gin.Context) {
 		return
 	}
 
-	err = c.BindJSON(&group)
-	if err != nil || group.ID != groupIDInt {
-		c.JSON(http.StatusOK, gin.H{"code": 4001, "msg": "请求参数错误"})
+	jsonData := make(map[string]interface{})
+	c.BindJSON(&jsonData)
+	name, exist := jsonData["name"]
+	if exist {
+		group.Name = name.(string)
+	}
+	subject, exist := jsonData["subject"]
+	if exist {
+		group.Name = subject.(string)
+	}
+	desc, exist := jsonData["desc"]
+	if exist {
+		group.Name = desc.(string)
+	}
+	validate := validator.New()
+	err = validate.Struct(group)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 4001, "msg": err.Error()})
 		return
 	}
+
 	err = models.UpdateGroup(group)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 5001, "msg": err.Error()})
