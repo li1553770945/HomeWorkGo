@@ -9,7 +9,7 @@ type GroupModel struct {
 	ID          int       `json:"id,omitempty" gorm:"primary_key"`
 	Name        string    `json:"name,omitempty"  validate:"required"`
 	Desc        string    `json:"desc,omitempty"`
-	Password    string    `json:"-"  validate:"required"`
+	Password    string    `json:"password"  validate:"required"`
 	CreatedAt   time.Time `gorm:"autoCreateTime"`
 	AllowCreate bool      `json:"allowCreate"`
 	OwnerID     int

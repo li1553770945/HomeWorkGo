@@ -72,7 +72,7 @@ func GetGroup(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"code": 4003, "msg": "您还未登录，请先登录"})
 		return
 	}
-
+	uidInt := uid.(int)
 	groupID := c.Query("groupID")
 	if groupID == "" {
 		c.JSON(http.StatusOK, gin.H{"code": 4001, "msg": "请求参数错误"})
@@ -89,6 +89,15 @@ func GetGroup(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"code": 5001, "msg": err.Error()})
 		return
 	}
+
+	if group.OwnerID != uidInt {
+		group.Password = ""
+		if joined, _ := models.CheckJoin(groupIDInt, uidInt); !joined {
+			c.JSON(http.StatusOK, gin.H{"code": 4003, "msg": "您没有权限查看"})
+			return
+		}
+	}
+
 	c.JSON(http.StatusOK, gin.H{"code": 0, "data": group})
 	return
 }
