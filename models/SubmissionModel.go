@@ -78,6 +78,44 @@ func GetHomeworkJoinedByOwnerId(ownerID int, start int, end int) (results *[]map
 	return results, nil
 
 }
+
+func GetHomeworkNotFinishedByOwnerId(ownerID int, start int, end int) (results *[]map[string]interface{}, err error) {
+	if end-start > 100 {
+		end = start + 100
+	}
+	results = new([]map[string]interface{})
+	submissions := new([]SubmissionModel)
+	err = dao.DB.Order("created_at desc").Where("owner_id = ? AND finished = ? ", ownerID, 0).Offset(start).Limit(end - start).Find(submissions).Error
+	if err != nil {
+		return nil, err
+	}
+	for i := 0; i < len(*submissions); i++ {
+		homework, err := GetHomeworkByID((*submissions)[i].HomeworkID)
+		if err != nil {
+			return nil, err
+		}
+
+		m := structs.Map(homework)
+		delete(m, "Group")
+		delete(m, "GroupID")
+		delete(m, "OwnerID")
+		delete(m, "Submissions")
+		delete(m, "Owner")
+		owner := structs.Map(homework.Owner)
+		delete(owner, "CreatedAt")
+		delete(owner, "LastLogin")
+		delete(owner, "Password")
+		delete(owner, "Status")
+		delete(owner, "Username")
+		delete(owner, "Validation")
+		m["Owner"] = owner
+		m["Finished"] = (*submissions)[i].Finished
+		*results = append(*results, m)
+	}
+	return results, nil
+
+}
+
 func GetSubmissionByHomeworkAndOwner(ownerID int, homewrokID int) (submission *SubmissionModel, err error) {
 	submission = new(SubmissionModel)
 	err = dao.DB.Model(&SubmissionModel{}).Where("owner_id = ? AND homework_id = ?", ownerID, homewrokID).First(submission).Error

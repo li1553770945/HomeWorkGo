@@ -187,6 +187,34 @@ func GetHomeworkJoined(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"code": 0, "data": homework})
 	return
 }
+
+func GetHomeworkNotFinished(c *gin.Context) {
+	session := sessions.Default(c)
+	uid := session.Get("uid")
+
+	if uid == nil {
+		c.JSON(http.StatusOK, gin.H{"code": 4003, "msg": "您还未登录，请先登录"})
+		return
+	}
+	start, end := c.Query("start"), c.Query("end")
+
+	if start == "" || end == "" {
+		c.JSON(http.StatusOK, gin.H{"code": 4001, "msg": "请求参数错误"})
+		return
+	}
+	ownerIDint := uid.(int)
+	startInt, _ := strconv.Atoi(start)
+	endInt, _ := strconv.Atoi(end)
+
+	homework, err := models.GetHomeworkNotFinishedByOwnerId(ownerIDint, startInt, endInt)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 5001, "msg": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"code": 0, "data": homework})
+	return
+}
+
 func Submit(c *gin.Context) {
 	session := sessions.Default(c)
 	uid := session.Get("uid")
