@@ -304,6 +304,7 @@ func ExportThread(homeworkID string, name string, savePath string) {
 	f, err := ioutil.ReadDir(filepath.ToSlash(filepath.Join(dir, savePath)))
 	if err != nil {
 		fmt.Println("压缩目录读取错误")
+		dao.RDB.Set("error"+homeworkID, "压缩目录读取错误", 3*time.Minute)
 		dao.RDB.Del("export" + homeworkID)
 		return
 	}
@@ -316,6 +317,7 @@ func ExportThread(homeworkID string, name string, savePath string) {
 		fw, err := w.Create(file.Name())
 		if err != nil {
 			fmt.Println("创建失败", err)
+			dao.RDB.Set("error"+homeworkID, "添加文件错误", 3*time.Minute)
 			dao.RDB.Del("export" + homeworkID)
 			return
 		}
@@ -323,12 +325,14 @@ func ExportThread(homeworkID string, name string, savePath string) {
 		fileContent, err := ioutil.ReadFile(filepath.ToSlash(filepath.Join(dir, savePath, file.Name())))
 		if err != nil {
 			fmt.Println("读取文件错误")
+			dao.RDB.Set("error"+homeworkID, "读取文件错误", 3*time.Minute)
 			dao.RDB.Del("export" + homeworkID)
 			return
 		}
 		_, err = fw.Write(fileContent)
 		if err != nil {
 			fmt.Println("写文件错误")
+			dao.RDB.Set("error"+homeworkID, "写入压缩文件错误", 3*time.Minute)
 			dao.RDB.Del("export" + homeworkID)
 			return
 		}
@@ -340,11 +344,6 @@ func ExportThread(homeworkID string, name string, savePath string) {
 	fmt.Printf("打包完成")
 	dao.RDB.Set("export"+homeworkID, token, 3*time.Minute)
 	dao.RDB.Set(token, fullPath, 3*time.Minute)
-}
-
-type ExportStruct struct {
-	Done  bool
-	Token string
 }
 
 func Export(c *gin.Context) {
@@ -378,20 +377,21 @@ func Export(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"code": 4003, "msg": "您不是该作业的创建者，无权进行导出操作"})
 		return
 	}
-	exportStruct := new(ExportStruct)
-	exportStruct.Token = ""
-	exportStruct.Done = false
+
+	erro, err := dao.RDB.Get("error" + homeworkID).Result()
+	if err == nil {
+		dao.RDB.Del("error" + homeworkID)
+		c.JSON(http.StatusOK, gin.H{"code": 5001, "data": erro})
+		return
+	}
 	token, err := dao.RDB.Get("export" + homeworkID).Result()
 	if err == nil { //没有错误，两种情况：导出中、导出完成
 		if token == "" {
-
-			c.JSON(http.StatusOK, gin.H{"code": 0, "data": exportStruct})
+			c.JSON(http.StatusOK, gin.H{"code": 0, "data": gin.H{"done": false, "token": ""}})
 			return
 		} else {
 
-			exportStruct.Token = token
-			exportStruct.Done = true
-			c.JSON(http.StatusOK, gin.H{"code": 0, "data": exportStruct})
+			c.JSON(http.StatusOK, gin.H{"code": 0, "data": gin.H{"done": true, "token": token}})
 			return
 		}
 
@@ -400,7 +400,7 @@ func Export(c *gin.Context) {
 
 			dao.RDB.Set("export"+homeworkID, "", 3*time.Hour)
 			go ExportThread(homeworkID, homework.Name, homework.SavePath)
-			c.JSON(http.StatusOK, gin.H{"code": 0, "data": exportStruct})
+			c.JSON(http.StatusOK, gin.H{"code": 0, "data": gin.H{"done": false, "token": ""}})
 			return
 		}
 		c.JSON(http.StatusOK, gin.H{"code": 5001, "msg": err.Error()})
