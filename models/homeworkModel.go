@@ -17,13 +17,13 @@ type HomeWorkModel struct {
 	CreatedAt         time.Time `gorm:"autoCreateTime"`
 	EndTime           time.Time `json:"endtime" validate:"required"`
 	CanSubmitAfterEnd bool
-	GroupID           int               `validate:"required"`
-	Group             GroupModel        `gorm:"Foreignkey:GroupID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"  validate:"-"`
-	OwnerID           int               `validate:"required"`
-	Owner             UserModel         `json:"owner,omitempty" gorm:"Foreignkey:OwnerID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"  validate:"-"`
-	SavePath          string            `json:"-"`
-	Submissions       []SubmissionModel `json:"submissions,omitempty" gorm:"many2many:submissions;"`
-	Type              string            `json:"type"`
+	GroupID           int        `validate:"required"`
+	Group             GroupModel `gorm:"Foreignkey:GroupID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"  validate:"-"`
+	OwnerID           int        `validate:"required"`
+	Owner             UserModel  `json:"owner,omitempty" gorm:"Foreignkey:OwnerID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"  validate:"-"`
+	SavePath          string     `json:"-"`
+	//Submissions       []SubmissionModel `json:"submissions,omitempty" gorm:"many2many:submissions;"`
+	Type string `json:"type"`
 }
 
 func CreateHomework(homework *HomeWorkModel) (err error) {
@@ -50,8 +50,10 @@ func CreateHomework(homework *HomeWorkModel) (err error) {
 		return err
 	}
 	for i := 0; i < len(group.Members); i++ {
-		fmt.Println(group.Members[i].ID, homework.ID)
-		err = dao.DB.Model(&homework).Association("Submissions").Append(&SubmissionModel{OwnerID: group.Members[i].ID, HomeworkID: homework.ID, EndTime: homework.EndTime})
+		err = dao.DB.Create(&SubmissionModel{OwnerID: group.Members[i].ID, HomeworkID: homework.ID, EndTime: homework.EndTime}).Error
+		if err != nil {
+			return err
+		}
 	}
 	return err
 }
