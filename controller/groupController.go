@@ -229,15 +229,20 @@ func UpdateGroup(c *gin.Context) {
 	if exist {
 		group.Name = name.(string)
 	}
-	subject, exist := jsonData["subject"]
+	subject, exist := jsonData["password"]
 	if exist {
-		group.Name = subject.(string)
+		group.Password = subject.(string)
 	}
 	desc, exist := jsonData["desc"]
 	if exist {
-		group.Name = desc.(string)
+		group.Desc = desc.(string)
+	}
+	allowCreate, exist := jsonData["allowCreate"]
+	if exist {
+		group.AllowCreate = allowCreate.(bool)
 	}
 	validate := validator.New()
+	fmt.Println(group)
 	err = validate.Struct(group)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 4001, "msg": err.Error()})

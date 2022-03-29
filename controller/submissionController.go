@@ -137,7 +137,7 @@ func GetSubmissionFileById(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"code": 5001, "msg": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"code": 0, "token": token})
+	c.JSON(http.StatusOK, gin.H{"code": 0, "data": gin.H{"token": token}})
 	return
 }
 
@@ -212,6 +212,26 @@ func GetHomeworkNotFinished(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"code": 0, "data": homework})
+	return
+}
+
+func GetHomeworkNotFinishedNum(c *gin.Context) {
+	session := sessions.Default(c)
+	uid := session.Get("uid")
+
+	if uid == nil {
+		c.JSON(http.StatusOK, gin.H{"code": 4003, "msg": "您还未登录，请先登录"})
+		return
+	}
+
+	ownerIDint := uid.(int)
+
+	num, err := models.GetHomeworkNotFinishedNumByOwnerId(ownerIDint)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 5001, "msg": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"code": 0, "data": num})
 	return
 }
 

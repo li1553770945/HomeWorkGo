@@ -136,3 +136,11 @@ func UpdateSubmission(submission *SubmissionModel) (err error) {
 	err = dao.DB.Save(submission).Error
 	return err
 }
+
+func GetHomeworkNotFinishedNumByOwnerId(ownerID int) (num int64, err error) {
+	err = dao.DB.Model(&SubmissionModel{}).Where("owner_id = ? AND finished = 0", ownerID).Count(&num).Error
+	if err != nil {
+		return 0, err
+	}
+	return num, err
+}
