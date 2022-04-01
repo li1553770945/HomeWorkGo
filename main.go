@@ -6,6 +6,8 @@ import (
 	"HomeWorkGo/routers"
 	"HomeWorkGo/setting"
 	"fmt"
+	"os"
+	"path/filepath"
 )
 
 func main() {
@@ -38,6 +40,12 @@ func main() {
 		return
 	}
 
+	dir, _ := filepath.Abs(filepath.Dir(os.Args[0]))
+	err = os.MkdirAll(filepath.Join(dir, "export"), os.ModePerm)
+	if err != nil {
+		fmt.Printf("创建导出文件夹失败")
+		return
+	}
 	// 注册路由
 	r := routers.SetupRouter()
 

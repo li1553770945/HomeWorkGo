@@ -299,7 +299,7 @@ func Submit(c *gin.Context) {
 func ExportThread(homeworkID string, name string, savePath string) {
 	token := "export" + homeworkID + GetToken()
 	dir, _ := filepath.Abs(filepath.Dir(os.Args[0]))
-	fullPath := filepath.ToSlash(filepath.Join(dir, savePath, name+".zip"))
+	zipPath := filepath.ToSlash(filepath.Join(dir, "export", name+time.Now().Format("20060102150405")+".zip"))
 
 	f, err := ioutil.ReadDir(filepath.ToSlash(filepath.Join(dir, savePath)))
 	if err != nil {
@@ -309,8 +309,7 @@ func ExportThread(homeworkID string, name string, savePath string) {
 		return
 	}
 
-	zipTarget := fullPath
-	fZip, _ := os.Create(zipTarget)
+	fZip, _ := os.Create(zipPath)
 	w := zip.NewWriter(fZip)
 
 	for _, file := range f {
@@ -343,7 +342,12 @@ func ExportThread(homeworkID string, name string, savePath string) {
 	}
 	fmt.Printf("打包完成")
 	dao.RDB.Set("export"+homeworkID, token, 3*time.Minute)
-	dao.RDB.Set(token, fullPath, 3*time.Minute)
+	dao.RDB.Set(token, zipPath, 3*time.Minute)
+	time.Sleep(30 * time.Minute)
+	err = os.Remove(zipPath)
+	if err != nil {
+		return
+	}
 }
 
 func Export(c *gin.Context) {
