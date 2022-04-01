@@ -77,5 +77,11 @@ func SetupRouter() *gin.Engine {
 		SubmissionRoutes.GET("/export", controller.Export)
 		SubmissionRoutes.GET("/download", controller.Download)
 	}
+
+	ConfigRoutes := r.Group("/api")
+	{
+		ConfigRoutes.GET("/config", controller.GetConfig)
+		ConfigRoutes.PUT("/config", controller.UpdateConfig)
+	}
 	return r
 }

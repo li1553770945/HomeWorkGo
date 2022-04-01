@@ -20,6 +20,10 @@ type UserModel struct {
 
 func CreateUser(user *UserModel) (err error) {
 	err = dao.DB.Create(&user).Error
+	if err != nil {
+		return err
+	}
+	err = CreateConfig(user.ID)
 	return err
 }
 func GetUserByUserName(username string) (user *UserModel, err error) {
