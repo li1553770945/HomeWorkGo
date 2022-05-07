@@ -26,8 +26,11 @@ func SetupRouter() *gin.Engine {
 
 		userRoutes.POST("/user", controller.Register)
 		userRoutes.GET("/user", controller.Me)
+		userRoutes.PUT("/user", controller.UpdateUser)
 		userRoutes.GET("/logout", controller.Logout)
 		userRoutes.POST("/login", controller.Login)
+		userRoutes.POST("/reset-password", controller.ResetPassword)
+		//userRoutes.POST("/new-validation", controller.NewValidation)
 
 	}
 	//Group

@@ -12,14 +12,18 @@ type UserModel struct {
 	Username   string    `json:"username,omitempty"  validate:"required" gorm:"type:varchar(30);uniqueIndex"`
 	Name       string    `json:"name,omitempty"  validate:"required"`
 	Password   string    `json:"-"  validate:"-"`
-	Validation string    `json:"-"`
+	StudentNo  string    `json:"student_no"`
 	Status     int       `json:"status,omitempty"`
+	Validation string    `json:"-"  validate:"-"`
+	ResetCnt   int       `json:"-"  validate:"-"`
 	CreatedAt  time.Time `json:"created_at,omitempty" gorm:"autoCreateTime,omitempty"`
 	LastLogin  time.Time `json:"last_login,omitempty"`
 }
 
 func CreateUser(user *UserModel) (err error) {
 	err = dao.DB.Create(&user).Error
+	user.Validation = ""
+	user.ResetCnt = 0
 	if err != nil {
 		return err
 	}
@@ -54,6 +58,26 @@ func CheckUserPasswd(user *UserModel, passwd string) bool {
 	return Encrypt(passwd) == user.Password
 }
 func UpdateUser(user *UserModel) (err error) {
+	err = dao.DB.Save(user).Error
+	return err
+}
+
+func ChangePassword(user *UserModel, password string) (err error) {
+	user.Password = Encrypt(password)
+	err = dao.DB.Save(user).Error
+	return err
+}
+func ResetPassword(user *UserModel, password string) (err error) {
+	user.Password = Encrypt(password)
+	user.Validation = ""
+	user.ResetCnt = 0
+	err = dao.DB.Save(user).Error
+	return err
+}
+func ResetUsername(user *UserModel, username string) (err error) {
+	user.Username = username
+	user.Validation = ""
+	user.ResetCnt = 0
 	err = dao.DB.Save(user).Error
 	return err
 }

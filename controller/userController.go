@@ -136,3 +136,103 @@ func Me(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"code": 0, "data": user})
 	return
 }
+
+func NewValidation(c *gin.Context) {
+	//email := c.Query("email")
+	//user =
+	//token := utils.GetToken()
+	//dao.RDB.Set("resetPassword"+email, token, 300*time.Second)
+	//c.JSON(http.StatusOK, gin.H{"code": 0})
+	return
+}
+
+func UpdateUser(c *gin.Context) {
+	session := sessions.Default(c)
+	uid := session.Get("uid")
+
+	if uid == nil {
+		c.JSON(http.StatusOK, gin.H{"code": 4003, "msg": "您还未登录，请先登录"})
+		return
+	}
+
+	user, err := models.GetUserById(uid.(int))
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 5001, "msg": err.Error()})
+		return
+	}
+
+	jsonData := make(map[string]interface{})
+	err = c.BindJSON(&jsonData)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 5001, "msg": err.Error()})
+		return
+	}
+	name, exist := jsonData["name"]
+	if exist {
+		user.Name = name.(string)
+	}
+
+	username, exist := jsonData["username"]
+	if exist {
+		user.Username = username.(string)
+	}
+
+	validate := validator.New()
+	err = validate.Struct(user)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 4001, "msg": err.Error()})
+		return
+	}
+	err = models.UpdateUser(user)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 5001, "msg": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"code": 0})
+	return
+}
+
+func ResetPassword(c *gin.Context) {
+	jsonData := make(map[string]interface{})
+	err := c.BindJSON(&jsonData)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 5001, "msg": err.Error()})
+		return
+	}
+	username := jsonData["username"]
+	validation := jsonData["validation"]
+	password := jsonData["password"]
+	if username == nil || validation == nil || password == nil {
+		c.JSON(http.StatusOK, gin.H{"code": 4003, "msg": "参数不合法"})
+		return
+	}
+	rUser, err := models.GetUserByUserName(username.(string))
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusOK, gin.H{"code": 4003, "msg": "用户不存在或验证码错误"})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"code": 5001, "msg": err.Error()})
+		return
+	}
+	if rUser.ResetCnt == 3 {
+		c.JSON(http.StatusOK, gin.H{"code": 4003, "msg": "用户不存在或验证码错误"})
+		return
+	}
+	if len(rUser.Validation) != 8 || rUser.Validation != validation.(string) {
+		rUser.ResetCnt += 1
+		models.UpdateUser(rUser)
+		c.JSON(http.StatusOK, gin.H{"code": 4003, "msg": "用户不存在或验证码错误"})
+		return
+
+	}
+	err = models.ResetPassword(rUser, password.(string))
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 5001, "msg": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"code": 0})
+	return
+
+}

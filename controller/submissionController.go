@@ -3,6 +3,7 @@ package controller
 import (
 	"HomeWorkGo/dao"
 	"HomeWorkGo/models"
+	"HomeWorkGo/utils"
 	"archive/zip"
 	"errors"
 	"fmt"
@@ -11,7 +12,6 @@ import (
 	"github.com/go-redis/redis"
 	"gorm.io/gorm"
 	"io/ioutil"
-	"math/rand"
 	"net/http"
 	"os"
 	"path"
@@ -19,18 +19,6 @@ import (
 	"strconv"
 	"time"
 )
-
-func GetToken() (token string) {
-	rand.Seed(time.Now().UnixNano())
-	str := "0123456789abcdefghijklmnopqrstuvwxyz"
-	bytes := []byte(str)
-	var result []byte
-	for i := 0; i < 10; i++ {
-		result = append(result, bytes[rand.Intn(len(bytes))])
-	}
-
-	return string(result) + time.Now().Format("20060102150405")
-}
 
 func GetSubmissionsByHomeworkId(c *gin.Context) {
 	session := sessions.Default(c)
@@ -131,7 +119,7 @@ func GetSubmissionFileById(c *gin.Context) {
 	dir, _ := filepath.Abs(filepath.Dir(os.Args[0]))
 	fullPath := filepath.ToSlash(filepath.Join(dir, homework.SavePath, submission.FileName))
 	submissionIDString := strconv.Itoa(submission.ID)
-	token := "file" + submissionIDString + GetToken()
+	token := "file" + submissionIDString + utils.GetToken()
 	err := dao.RDB.Set(token, fullPath, 60*time.Second).Err()
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 5001, "msg": err.Error()})
@@ -297,7 +285,7 @@ func Submit(c *gin.Context) {
 }
 
 func ExportThread(homeworkID string, name string, savePath string) {
-	token := "export" + homeworkID + GetToken()
+	token := "export" + homeworkID + utils.GetToken()
 	dir, _ := filepath.Abs(filepath.Dir(os.Args[0]))
 	zipPath := filepath.ToSlash(filepath.Join(dir, "export", name+time.Now().Format("20060102150405")+".zip"))
 
